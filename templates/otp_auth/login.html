@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Sign in{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center"><div class="col-md-5"><div class="card"><div class="card-body p-4">
+        <div class="text-center mb-4">
+            <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10 text-primary mb-3" style="width:60px;height:60px;"><i class="fas fa-envelope fa-lg"></i></div>
+            <h4 class="fw-bold">Sign in to view your tickets</h4>
+            <p class="text-muted small">We'll email you a one-time code</p>
+        </div>
+        {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+        <form method="post">{% csrf_token %}
+            <div class="mb-3"><label class="form-label small fw-bold">Email</label>
+                <input type="email" name="email" class="form-control" placeholder="you@example.com" value="{{ email|default:'' }}" required autofocus></div>
+            <button type="submit" class="btn btn-primary w-100 btn-lg">Send code</button>
+        </form>
+        <div class="text-center mt-3"><small class="text-muted">No password needed. New here? Just <a href="{% url 'home' %}">book a cruise</a> — we'll email your ticket.</small></div>
+    </div></div></div></div>
+</div>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}{{ cruise.name }}{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li><li class="breadcrumb-item active">{{ cruise.name }}</li></ol></nav>
+    <div class="row g-4">
+        <div class="col-lg-8"><div class="card">
+            {% if cruise.image %}<img src="{{ cruise.image.url }}" class="card-img-top" style="height:300px;object-fit:cover;" alt="{{ cruise.name }}">{% endif %}
+            <div class="card-body">
+                <h2 class="fw-bold">{{ cruise.name }}</h2>
+                <div class="d-flex align-items-center text-muted mb-3">
+                    <span class="me-3"><i class="fas fa-map-marker-alt text-primary me-1"></i>{{ cruise.from_port }} → {{ cruise.to_port }}</span>
+                    <span><i class="fas fa-clock text-primary me-1"></i>{{ cruise.duration_hours }} hours</span>
+                </div>
+                <p class="text-muted">{{ cruise.description }}</p>
+            </div>
+        </div></div>
+        <div class="col-lg-4"><div class="card"><div class="card-body">
+            <h5 class="fw-bold mb-3">Select Schedule</h5>
+            {% for schedule in schedules %}
+            <div class="d-flex align-items-center justify-content-between p-3 mb-2 rounded" style="background:#f8f9fa;">
+                <div><div class="fw-bold">{{ schedule.date|date:"D, d M" }}</div><small class="text-muted">{{ schedule.departure_time|time:"h:i A" }}</small></div>
+                <div class="text-end"><div class="text-success fw-bold">{{ schedule.available_seats_count }} seats</div><a href="{% url 'schedule_seats' schedule.id %}" class="btn btn-sm btn-primary mt-1">Select</a></div>
+            </div>
+            {% empty %}<p class="text-muted text-center py-3">No upcoming schedules</p>{% endfor %}
+        </div></div></div>
+    </div>
+</div>
+{% endblock %}

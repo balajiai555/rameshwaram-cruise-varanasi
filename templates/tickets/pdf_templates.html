@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        @page {
+            size: a4 portrait;
+            margin: 6mm 8mm 6mm 8mm;
+        }
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #3b2314; /* Deep warm brown */
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+            font-size: 12px;
+            line-height: 1.3;
+        }
+        .ticket-container {
+            border: 2px solid #fde68a;
+            border-radius: 8px;
+            padding: 12px;
+            background-color: #fffdf5; /* Light Warm Yellow */
+        }
+        
+        /* Header Block */
+        .header-table {
+            width: 100%;
+            border-bottom: 2px solid #f59e0b;
+            padding-bottom: 6px;
+            margin-bottom: 8px;
+        }
+        .logo-cell {
+            text-align: left;
+            vertical-align: middle;
+            width: 50%;
+            padding-left: 18px;
+        }
+        .logo-image {
+            height: 80px; /* Big & prominent, but optimized to prevent 2nd page spill */
+            display: block;
+        }
+        .brand-fallback {
+            font-size: 20px;
+            font-weight: 900;
+            color: #be0a13;
+            letter-spacing: 0.5px;
+        }
+        .header-info-cell {
+            text-align: right;
+            vertical-align: middle;
+            width: 50%;
+            padding-right: 18px; /* Pushes it inside the border to prevent cut off */
+        }
+        .bill-title {
+            font-size: 12px; /* Slightly smaller to prevent wrapping or overflowing */
+            font-weight: 800;
+            color: #be0a13;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 2px;
+        }
+        .company-gst {
+            font-size: 10px;
+            color: #78350f;
+            font-weight: 600;
+            line-height: 1.15;
+        }
+
+        /* Voyage Details & QR Columns */
+        .info-table {
+            width: 100%;
+            margin-bottom: 8px;
+        }
+        .details-column {
+            vertical-align: top;
+            width: 60%;
+        }
+        .qr-column {
+            vertical-align: top;
+            width: 40%;
+        }
+        .card {
+            background-color: #ffffff;
+            border: 1px solid #fef3c7;
+            border-radius: 6px;
+            padding: 10px;
+            margin-right: 4px;
+        }
+        .card-right {
+            background-color: #ffffff;
+            border: 1px dashed #f59e0b;
+            border-radius: 6px;
+            padding: 8px;
+            text-align: center;
+            margin-left: 4px;
+        }
+        
+        /* Section Header */
+        .section-title {
+            font-size: 10.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #b45309;
+            margin-bottom: 6px;
+            border-bottom: 1px solid #fde68a;
+            padding-bottom: 3px;
+            letter-spacing: 0.3px;
+        }
+        
+        /* Grid Text Spacing */
+        .data-label {
+            font-size: 9.5px;
+            color: #b45309;
+            text-transform: uppercase;
+            font-weight: 700;
+            margin-bottom: 1px;
+        }
+        .data-value {
+            font-size: 13px;
+            font-weight: 700;
+            color: #451a03;
+        }
+        
+        /* Boarding QR code image */
+        .qr-image {
+            width: 95px;
+            height: 95px;
+            margin-bottom: 2px;
+        }
+        .booking-ref {
+            font-size: 11.5px; /* Larger text for booking reference */
+            color: #78350f;
+            font-weight: 800;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            letter-spacing: 0.3px;
+        }
+
+        /* Passenger Manifest Table */
+        .manifest-card {
+            background-color: #ffffff;
+            border: 1px solid #fef3c7;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 8px;
+        }
+        .manifest-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .manifest-header {
+            background-color: #fef3c7;
+            font-size: 9.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #78350f;
+            text-align: left;
+            padding: 5px 8px;
+        }
+        .manifest-cell {
+            padding: 6px 8px;
+            border-bottom: 1px solid #fef3c7;
+            font-size: 11.5px;
+        }
+        .manifest-row:last-child .manifest-cell {
+            border-bottom: none;
+        }
+        .primary-star {
+            color: #be0a13;
+            font-weight: bold;
+        }
+
+        /* Bill of Supply Invoice Breakout */
+        .bill-split-table {
+            width: 100%;
+            margin-bottom: 8px;
+        }
+        .lead-booked-cell {
+            vertical-align: top;
+            width: 55%;
+        }
+        .invoice-breakdown-cell {
+            vertical-align: top;
+            width: 45%;
+        }
+        .invoice-card {
+            background-color: #ffffff;
+            border: 1px solid #fde68a;
+            border-radius: 6px;
+            padding: 8px 10px;
+            margin-left: 4px;
+        }
+        .invoice-table {
+            width: 100%;
+        }
+        .invoice-line {
+            font-size: 10.5px;
+            color: #78350f;
+            padding: 1.5px 0;
+        }
+        .invoice-line-val {
+            text-align: right;
+            font-weight: 700;
+            color: #451a03;
+        }
+        .invoice-total-line {
+            font-size: 12.5px;
+            font-weight: 800;
+            color: #be0a13;
+            border-top: 1px solid #fde68a;
+            padding-top: 3px;
+            margin-top: 3px;
+        }
+        .status-badge {
+            color: #047857;
+            font-weight: 800;
+            font-size: 12px;
+        }
+
+        /* Footer Notes */
+        .footer-table {
+            width: 100%;
+            border-top: 1px solid #fde68a;
+            padding-top: 6px;
+            margin-top: 6px;
+        }
+        .footer-text {
+            font-size: 9px;
+            color: #b45309;
+            text-align: center;
+            line-height: 1.35;
+        }
+    </style>
+</head>
+<body>
+    <div class="ticket-container">
+        <!-- Header / Logo & Company GST Info -->
+        <table class="header-table">
+            <tr>
+                <td class="logo-cell">
+                    {% if logo_path %}
+                        <img class="logo-image" src="{{ logo_path }}" alt="Rameshwaram Cruise">
+                    {% else %}
+                        <span class="brand-fallback">RAMESHWARAM CRUISE</span>
+                    {% endif %}
+                </td>
+                <td class="header-info-cell">
+                    <div class="bill-title">Booking Confirmation / E-Ticket</div>
+                    <div class="company-gst">
+                        <strong>Rameshwaram Cruiseline</strong>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <!-- Main Info Columns -->
+        <table class="info-table">
+            <tr>
+                <!-- Divine Yatra Details Card -->
+                <td class="details-column">
+                    <div class="card">
+                        <div class="section-title">&#127963; Divine Yatra Details</div>
+                        
+                        <table style="width:100%;">
+                            <tr>
+                                <td style="width:50%; padding-bottom:6px;">
+                                    <div class="data-label">Cruise Vessel</div>
+                                    <div class="data-value">{{ ticket.booking.schedule.cruise.name }}</div>
+                                </td>
+                                <td style="width:50%; padding-bottom:6px;">
+                                    <div class="data-label">Ticket Number</div>
+                                    <div class="data-value" style="font-family:monospace; font-size:12.5px;">{{ ticket.ticket_number }}</div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" style="padding-bottom:6px;">
+                                    <div class="data-label">Route / Sector</div>
+                                    <div class="data-value">{{ ticket.booking.schedule.cruise.from_port }} &rarr; {{ ticket.booking.schedule.cruise.to_port }}</div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="width:50%; padding-bottom:6px;">
+                                    <div class="data-label">Departure Date</div>
+                                    <div class="data-value">{{ ticket.booking.schedule.date|date:"D, d M Y" }}</div>
+                                </td>
+                                <td style="width:50%; padding-bottom:6px;">
+                                    <div class="data-label">Departure Time</div>
+                                    <div class="data-value">{{ ticket.booking.schedule.departure_time|time:"h:i A" }}</div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="width:50%;">
+                                    <div class="data-label">Main Deck Row</div>
+                                    <div class="data-value">Row {{ ticket.booking.booking_seats.first.seat.row_label }}</div>
+                                </td>
+                                <td style="width:50%;">
+                                    <div class="data-label">Allocated Seats</div>
+                                    <div class="data-value">{% for bs in ticket.booking.booking_seats.all %}{{ bs.seat.seat_number }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </td>
+
+                 <!-- Boarding QR Code Column -->
+                 <td class="qr-column">
+                     <div class="card-right">
+                         <div class="section-title">&#128247; Boarding Gate QR</div>
+                         <div class="booking-ref">Ref: {{ ticket.booking.booking_number }}</div>
+                         {% if ticket.qr_code %}
+                             <img class="qr-image" src="{{ ticket.qr_code.path }}" alt="QR Code">
+                         {% endif %}
+                     </div>
+                 </td>
+            </tr>
+        </table>
+
+        <!-- Passenger Manifest Table -->
+        <div class="manifest-card">
+            <div class="section-title">&#128101; Passenger Manifest</div>
+            <table class="manifest-table">
+                <thead>
+                    <tr>
+                        <th class="manifest-header" style="border-radius:4px 0 0 4px; width:15%;">Seat</th>
+                        <th class="manifest-header" style="width:45%;">Passenger Name</th>
+                        <th class="manifest-header" style="border-radius:0 4px 4px 0; width:40%;">Identity Info</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for bs in ticket.booking.booking_seats.all %}
+                    <tr class="manifest-row">
+                        <td class="manifest-cell" style="font-weight:700;">Seat {{ bs.seat.seat_number }}</td>
+                        <td class="manifest-cell">
+                            {{ bs.passenger_name }} 
+                            {% if bs.is_primary %}
+                                <span class="primary-star">&starf; (Primary)</span>
+                            {% endif %}
+                        </td>
+                        <td class="manifest-cell" style="color:#78350f; font-size:10.5px;">
+                            {% if bs.is_primary %}
+                                {{ bs.get_id_type_display }} &mdash; {{ bs.id_number }}
+                            {% else %}
+                                Companion Passenger
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Bill of Supply & Invoice details -->
+        <table class="bill-split-table">
+            <tr>
+                <!-- Lead Booking Details -->
+                <td class="lead-booked-cell">
+                    <div class="card" style="padding: 10px 12px; min-height: 80px;">
+                        <div class="section-title">&#128100; Lead Booker Details</div>
+                        <table style="width:100%; margin-top:2px;">
+                            <tr>
+                                <td style="width:30%; font-size:9.5px; color:#b45309; font-weight:700;">NAME:</td>
+                                <td style="font-weight:700; font-size:11.5px; color:#451a03;">{{ ticket.booking.guest_name }}</td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:9.5px; color:#b45309; font-weight:700; padding-top:2px;">PHONE:</td>
+                                <td style="font-weight:700; font-size:11.5px; color:#451a03; padding-top:2px;">+91 {{ ticket.booking.guest_phone }}</td>
+                            </tr>
+                            <tr>
+                                <td style="font-size:9.5px; color:#b45309; font-weight:700; padding-top:2px;">EMAIL:</td>
+                                <td style="font-weight:700; font-size:10.5px; color:#451a03; padding-top:2px; font-family:monospace;">{{ ticket.booking.guest_email }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </td>
+
+                <!-- Detailed Tax Invoice Receipt (Bill of Supply) -->
+                <td class="invoice-breakdown-cell">
+                    <div class="invoice-card">
+                        <div class="section-title">&#128179; Fare Summary</div>
+                         <table class="invoice-table">
+                             <tr>
+                                 <td class="invoice-line">Passenger Ticket Fare</td>
+                                 <td class="invoice-line invoice-line-val">Rs. {{ ticket.booking.total_amount }}</td>
+                             </tr>
+                             <tr class="invoice-total-line">
+                                <td style="padding-top:3px; font-weight:800;">Grand Total</td>
+                                <td style="padding-top:3px; text-align:right; font-weight:800; font-size:13px;">Rs. {{ ticket.booking.total_amount }}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding-top:3px; font-size:9.5px; color:#b45309; font-weight:700;">TICKET STATUS</td>
+                                <td style="padding-top:3px; text-align:right;" class="status-badge">&#10003; CONFIRMED</td>
+                            </tr>
+                        </table>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <!-- Footer terms & conditions -->
+        <table class="footer-table">
+            <tr>
+                <td class="footer-text">
+                    <p style="margin:0 0 2px 0; font-weight:700; color: #78350f;">&#9888; Important Terms and Conditions</p>
+                    <p style="margin:0;">1. This is a computer-generated e-ticket and serves as an official boarding pass. No physical signature is required.<br>
+                    2. Please arrive at the boarding deck at least 30 minutes before your departure time. Gate closes 15 minutes prior.<br>
+                    3. Carrying a physical government-approved photo ID matching the passenger name is mandatory during boarding verification.<br>
+                    4. Once the ticket is generated, no refunds will be made upon cancellation.<br>
+                    5. For modifications, contact customer support at support@cruisebooking.com.</p>
+                </td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>

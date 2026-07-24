@@ -1,0 +1,456 @@
+{% extends 'base.html' %}
+{% block title %}Passenger Information & Checkout{% endblock %}
+
+{% block content %}
+<style>
+    .breadcrumb-item+.breadcrumb-item::before {
+        content: "›";
+        font-size: 1.2rem;
+        vertical-align: -2px;
+    }
+
+    .checkout-card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+        background: #ffffff;
+    }
+
+    .summary-sticky-card {
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+    }
+
+    .passenger-block {
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 20px;
+    }
+
+    .seat-badge {
+        background: #eff6ff;
+        color: #2563eb;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-weight: 700;
+        font-size: 0.85rem;
+    }
+
+    .countdown-banner {
+        background: #fffbeb;
+        border: 1px solid #fef3c7;
+        color: #b45309;
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-weight: 600;
+    }
+</style>
+
+<div class="container py-5">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}" class="text-decoration-none text-muted">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'cruise_detail' schedule.cruise.pk %}"
+                    class="text-decoration-none text-muted">{{ schedule.cruise.name }}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'schedule_seats' schedule.id %}"
+                    class="text-decoration-none text-muted">Select Seats</a></li>
+            <li class="breadcrumb-item active fw-semibold text-dark">Checkout</li>
+        </ol>
+    </nav>
+
+    <div class="countdown-banner d-flex align-items-center justify-content-between mb-4 shadow-sm">
+        <div>
+            <i class="fas fa-hourglass-half me-2 animate-spin"></i>
+            <span>Seats Reserved! Please complete your transactional validation within the holding period
+                framework.</span>
+        </div>
+        <div id="countdownTimer" class="font-monospace fw-bold fs-5">{{ hold_minutes }}:00</div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card checkout-card p-4 p-md-5">
+                <h4 class="fw-extrabold text-dark mb-4">Passenger Information</h4>
+
+                <form id="checkoutForm">
+                    <h5 class="fw-bold text-secondary mb-3"><i class="far fa-id-badge me-2 text-primary"></i>Primary
+                        Contact Profile</h5>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-muted">Contact Name</label>
+                            <input type="text" id="guestName" class="form-control" value="{{ prefill_name }}" required
+                                placeholder="e.g. John Doe">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-muted">Email Address</label>
+                            <input type="email" id="guestEmail" class="form-control" value="{{ prefill_email }}"
+                                required placeholder="name@domain.com">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-muted">Phone Number</label>
+                            <input type="tel" id="guestPhone" class="form-control" required
+                                placeholder="+91 XXXXX XXXXX">
+                        </div>
+                    </div>
+
+                    <div class="row mb-5">
+                        <div class="col-12">
+                            <label class="form-label small fw-bold text-muted">Full Permanent & Billing Address</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-2 border-end-0 text-muted"
+                                    style="border-radius: 12px 0 0 12px;"><i class="fas fa-map-marked-alt"></i></span>
+                                <textarea id="guestAddress" class="form-control border-start-0" rows="2" required
+                                    placeholder="House/Flat No., Street, Area, City, State, Pincode"
+                                    style="border-radius: 0 12px 12px 0;"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card bg-light border-0" style="border-radius: 12px;">
+                                <div class="card-body p-3">
+                                    <div class="form-check d-flex align-items-start gap-2">
+                                        <input class="form-check-input mt-1" type="checkbox" id="privacyPolicyAgree" required>
+                                        <label class="form-check-label small text-muted mb-0" for="privacyPolicyAgree">
+                                            I agree to the <a href="{% url 'privacy_policy' %}" target="_blank" class="fw-bold text-primary text-decoration-none">Data Use, Privacy & Policy</a> guidelines. I consent to Rameshwaram Cruises collecting and processing my contact details and traveler information to facilitate this booking, ensure compliance with port authorities, and manage travel communications.
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h5 class="fw-bold text-secondary mb-3"><i class="fas fa-id-card me-2 text-primary"></i>Traveler Identity Verification</h5>
+<div class="d-flex flex-column gap-4">
+    {% for seat in seats %}
+        <div class="passenger-block">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="fw-bold text-dark">
+                    {% if forloop.first %}
+                        Primary Passenger (Ticket Holder) <span class="text-danger">*</span>
+                    {% else %}
+                         Co-Traveler <span class="text-muted small fw-normal">(Optional)</span>
+                    {% endif %}
+                </span>
+                <span class="seat-badge"><i class="fas fa-chair me-1"></i> Seat {{ seat.seat_number }} (Row {{ seat.row_label }})</span>
+            </div>
+            
+            {% if forloop.first %}
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold text-muted">Full Legal Name <span class="text-danger">*</span></label>
+                        <input type="text" id="primaryName" class="form-control" value="{{ prefill_name }}" required placeholder="As shown on ID card">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold text-muted">Select ID Card Type <span class="text-danger">*</span></label>
+                        <select id="primaryIdType" class="form-control" required>
+                            <option value="" disabled selected>Choose ID document...</option>
+                            {% for val, text in id_types %}
+                                <option value="{{ val }}">{{ text }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold text-muted">ID Card Number <span class="text-danger">*</span></label>
+                        <input type="text" id="primaryIdNumber" class="form-control" required placeholder="Enter ID number">
+                    </div>
+                </div>
+            {% else %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold text-muted">Full Name</label>
+                        <input type="text" class="form-control additional-passenger-name" placeholder="Enter other Pessenges name">
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    {% endfor %}
+</div>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card summary-sticky-card p-3 sticky-top" style="top: 24px; z-index: 10;">
+                <div class="card-body">
+                    <h5 class="fw-bold text-dark mb-3">Fare Manifest Breakdown</h5>
+
+                    <div class="text-secondary small mb-3">
+                        <span class="d-block mb-1 fw-bold text-uppercase tracking-wider" style="font-size: 10px;">Vessel
+                            Fleet</span>
+                        <span class="text-dark fw-bold h6 d-block">{{ schedule.cruise.name }}</span>
+                    </div>
+
+                    <div class="border-top border-light pt-3 d-flex flex-column gap-2 text-secondary mb-4">
+                        <div class="d-flex justify-content-between"><span>Passenger Fares</span><span
+                                class="fw-semibold text-dark">Rs.{{ subtotal }}</span></div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center bg-light p-3 rounded-3 mb-4">
+                        <span class="h6 fw-bold mb-0 text-dark">Total Amount Due</span>
+                        <span class="h4 fw-black text-primary mb-0">Rs.{{ total }}</span>
+                    </div>
+
+                    <button type="button" id="payButton" onclick="processCheckoutOrder()"
+                        class="btn btn-primary btn-lg w-100 py-3 fw-bold rounded-3 shadow">
+                        <i class="fas fa-shield-alt me-2"></i> Confirm & Pay Now
+                    </button>
+                    {% if debug %}
+                    <button type="button" id="dummyPayButton" onclick="processCheckoutOrder(true)"
+                        class="btn btn-outline-danger btn-lg w-100 py-2 fw-bold rounded-3 mt-3">
+                        <i class="fas fa-flask me-2"></i> [Test Env] Dummy Success Payment
+                    </button>
+                    {% endif %}
+                    <button type="button" id="cancelHoldButton" onclick="cancelAndReleaseBooking()"
+                        class="btn btn-outline-secondary w-100 py-2 fw-bold rounded-3 mt-3">
+                        <i class="fas fa-times me-1"></i> Cancel & Change Seats
+                    </button>
+
+                    <div class="mt-4 p-3 bg-light border-start border-warning border-3" style="border-radius: 4px 12px 12px 4px;">
+                        <h6 class="fw-bold text-dark mb-2"><i class="fas fa-info-circle text-warning me-1"></i> Important Policies</h6>
+                        <ul class="list-unstyled mb-0 small text-secondary">
+                            <li class="mb-2 d-flex align-items-start">
+                                <i class="fas fa-exclamation-circle text-danger me-2 mt-1"></i>
+                                <span><strong>Refund Policy:</strong> No refund were made for cancelation of ticket.</span>
+                            </li>
+                            <li class="d-flex align-items-start">
+                                <i class="fas fa-child text-success me-2 mt-1"></i>
+                                <span><strong>Child Policy:</strong> children up to age 5 year can travel free but need dob proff where traveler realtion mentioned.</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    // System Wide Core Checkout Request Configurations variables
+    const scheduleId = parseInt("{{ schedule.id }}");
+    const bookingId = parseInt("{{ booking_id }}");
+    const seatIdsStr = "{{ seat_ids }}";
+    const razorpayKey = "{{ razorpay_key }}";
+    let holdDurationSeconds = parseInt("{{ hold_minutes }}") * 60;
+
+    async function cancelAndReleaseBooking() {
+        if (!confirm("Are you sure you want to cancel this booking and change your selected seats? Your current seats will be released immediately.")) {
+            return;
+        }
+        const cancelBtn = document.getElementById('cancelHoldButton');
+        if (cancelBtn) {
+            cancelBtn.disabled = true;
+            cancelBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Releasing seats...';
+        }
+        try {
+            const response = await fetch("{% url 'release_booking' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": "{{ csrf_token }}"
+                },
+                body: JSON.stringify({ booking_id: bookingId })
+            });
+            if (response.ok) {
+                clearInterval(interval);
+                window.location.href = "{% url 'schedule_seats' schedule.id %}";
+            } else {
+                throw new Error("Failed to release seats");
+            }
+        } catch (error) {
+            alert("Error releasing seats: " + error.message);
+            if (cancelBtn) {
+                cancelBtn.disabled = false;
+                cancelBtn.innerHTML = '<i class="fas fa-times me-1"></i> Cancel & Change Seats';
+            }
+        }
+    }
+
+    // Operational Holding Timer Tick Function Implementation
+    const interval = setInterval(() => {
+        holdDurationSeconds--;
+        const mins = Math.floor(holdDurationSeconds / 60);
+        const secs = holdDurationSeconds % 60;
+        document.getElementById('countdownTimer').textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        if (holdDurationSeconds <= 0) {
+            clearInterval(interval);
+            alert("Your seat allocation reservation window has expired. Please select seats again.");
+            window.location.href = "{% url 'schedule_seats' schedule.id %}";
+        }
+    }, 1000);
+
+    // Dynamic Server Async Order Processing Core Fetch Operations Workflow Mapping
+    async function processCheckoutOrder(bypassRazorpay = false) {
+        const form = document.getElementById('checkoutForm');
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        const payBtn = document.getElementById('payButton');
+        const dummyPayBtn = document.getElementById('dummyPayButton');
+        if (payBtn) {
+            payBtn.disabled = true;
+            payBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Initializing Secure Gateway...';
+        }
+        if (dummyPayBtn) {
+            dummyPayBtn.disabled = true;
+        }
+
+        // FIXED: Gracefully fallback to "Co-Traveler" if optional companion inputs are left blank
+        const additionalNames = Array.from(document.querySelectorAll('.additional-passenger-name'))
+            .map(input => input.value.trim() || "Co-Traveler");
+
+        const payload = {
+            schedule_id: scheduleId,
+            seat_ids: seatIdsStr,
+            guest_name: document.getElementById('guestName').value,
+            guest_email: document.getElementById('guestEmail').value,
+            guest_phone: document.getElementById('guestPhone').value,
+            guest_address: document.getElementById('guestAddress').value,
+            primary_name: document.getElementById('primaryName').value,
+            primary_id_type: document.getElementById('primaryIdType').value,
+            primary_id_number: document.getElementById('primaryIdNumber').value,
+            passenger_names: additionalNames
+        };
+
+        try {
+            // Trigger CreateOrderView Backend API Endpoint
+            const orderResponse = await fetch("{% url 'create_order' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": "{{ csrf_token }}"
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!orderResponse.ok) {
+                const errText = await orderResponse.text();
+                console.error("Order creation failed:", errText);
+                throw new Error("Order creation failed on backend. Check server console logs.");
+            }
+
+            const orderResult = await orderResponse.json();
+
+            if (bypassRazorpay) {
+                if (payBtn) {
+                    payBtn.innerHTML = '<i class="fas fa-flask fa-spin me-2"></i>Verifying Test Payment...';
+                }
+                const verificationResponse = await fetch("{% url 'verify_payment' %}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    },
+                    body: JSON.stringify({
+                        razorpay_order_id: orderResult.order_id,
+                        razorpay_payment_id: "pay_dummy_" + orderResult.booking_number,
+                        razorpay_signature: "dummy_signature",
+                        is_dummy: true
+                    })
+                });
+
+                if (!verificationResponse.ok) {
+                    const errText = await verificationResponse.text();
+                    console.error("Dummy verification failed:", errText);
+                    throw new Error("Verification failed on backend. Check server console logs.");
+                }
+
+                const verificationResult = await verificationResponse.json();
+                if (verificationResult.success && verificationResult.ticket_url) {
+                    clearInterval(interval);
+                    window.location.replace(verificationResult.ticket_url);
+                } else {
+                    throw new Error(verificationResult.error || "Dummy verification failed.");
+                }
+                return;
+            }
+
+            // Launch Native Core Inline Modal Processing UI Frame Components using properties payload returned
+            const gatewayOptions = {
+                "key": razorpayKey,
+                "amount": orderResult.amount,
+                "currency": "INR",
+                "name": "CruiseBook Operations",
+                "description": "Voyage Verification Pass Ref #" + orderResult.booking_number,
+                "image": "https://cdn-icons-png.flaticon.com/512/3206/3206019.png",
+                "order_id": orderResult.order_id,
+                "handler": async function (paymentCallbackResponse) {
+                    payBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin me-2"></i>Confirming Cleared Ledger Signature...';
+
+                    try {
+                        // Route parameters payload variables safely directly up into VerifyPaymentView view endpoint
+                        const verificationResponse = await fetch("{% url 'verify_payment' %}", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRFToken": "{{ csrf_token }}"
+                            },
+                            body: JSON.stringify({
+                                razorpay_order_id: paymentCallbackResponse.razorpay_order_id,
+                                razorpay_payment_id: paymentCallbackResponse.razorpay_payment_id,
+                                razorpay_signature: paymentCallbackResponse.razorpay_signature
+                            })
+                        });
+
+                        if (!verificationResponse.ok) {
+                            const errText = await verificationResponse.text();
+                            console.error("Payment verification failed:", errText);
+                            throw new Error("Verification failed on backend. Check server console logs.");
+                        }
+
+                        const verificationResult = await verificationResponse.json();
+                        
+                        if (verificationResult.success && verificationResult.ticket_url) {
+                            clearInterval(interval);
+                            // FIXED: Using replace prevents browser navigation caching bugs over active ngrok tunnels
+                            window.location.replace(verificationResult.ticket_url);
+                        } else {
+                            alert("Payment recorded, but routing failed: " + (verificationResult.error || "Unknown Error"));
+                            window.location.replace("{% url 'booking_list' %}");
+                        }
+                    } catch (verifyError) {
+                        console.error("Network verification drop:", verifyError);
+                        alert("Payment authorized successfully! Redirecting directly to your dashboard passes layout index...");
+                        window.location.replace("{% url 'booking_list' %}");
+                    }
+                },
+                "prefill": {
+                    "name": payload.guest_name,
+                    "email": payload.guest_email,
+                    "contact": payload.guest_phone
+                },
+                "theme": { "color": "#2563eb" },
+                "modal": {
+                    "ondismiss": function () {
+                        payBtn.disabled = false;
+                        payBtn.innerHTML = '<i class="fas fa-shield-alt me-2"></i> Confirm & Pay Now';
+                    }
+                }
+            };
+
+            const rzpWindowInstance = new Razorpay(gatewayOptions);
+            rzpWindowInstance.open();
+
+        } catch (error) {
+            alert("Transaction processing failed: " + error.message);
+            if (payBtn) {
+                payBtn.disabled = false;
+                payBtn.innerHTML = '<i class="fas fa-shield-alt me-2"></i> Confirm & Pay Now';
+            }
+            if (dummyPayBtn) {
+                dummyPayBtn.disabled = false;
+            }
+        }
+    }
+</script>
+{% endblock %}

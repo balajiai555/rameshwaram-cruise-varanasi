@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% block title %}Manage Schedules & Pricing{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <h3 class="fw-bold mb-0">
+            <i class="fas fa-calendar-alt text-primary me-2"></i>Schedules & Dynamic Pricing
+        </h3>
+        <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill font-monospace small fw-semibold">
+            Active Vessel: Rameshwaram Cruise
+        </span>
+    </div>
+
+    <!-- Toast message alerts -->
+    {% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show rounded-3 small py-2.5 shadow-sm" role="alert">
+            <i class="fas {% if message.tags == 'error' %}fa-exclamation-circle{% else %}fa-check-circle{% endif %} me-2"></i>
+            {{ message }}
+            <button type="button" class="btn-close py-2.5" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="row g-4">
+        <!-- Left: Batch Schedule Generator Card -->
+        <div class="col-lg-5">
+            <div class="card shadow-sm border-0 rounded-4 mb-4">
+                <div class="card-header bg-dark text-white rounded-top-4 p-3 border-0">
+                    <h5 class="fw-bold mb-0"><i class="fas fa-plus-circle text-warning me-2"></i>Batch Generate Slots</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" action="{% url 'dashboard_schedules' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="generate">
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted">Start Date *</label>
+                                <input type="date" name="start_date" class="form-control rounded-3" value="{{ today }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold text-muted">End Date *</label>
+                                <input type="date" name="end_date" class="form-control rounded-3" value="{{ today }}" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-bold text-muted">Departure Time *</label>
+                                <input type="time" name="departure_time" class="form-control rounded-3" value="18:00" required>
+                                <div class="form-text small" style="font-size: 11px;">Typically 18:00 (06:00 PM) for the Ganga Aarti tour.</div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label small fw-bold text-muted">Seat Ticket Price (INR) *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light fw-bold text-muted">Rs.</span>
+                                    <input type="number" name="price" class="form-control rounded-end-3 font-monospace fw-bold" value="700" min="1" required>
+                                </div>
+                                <div class="form-text small" style="font-size: 11px;">Standard: Rs. 700. For festivals (e.g. Dev Deepawali), enter surge price (e.g. 5000).</div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 py-2.5 fw-bold rounded-3 mt-4">
+                            <i class="fas fa-rocket me-2"></i>Generate Schedules & Seats
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm border-0 rounded-4" style="background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%); border: 1px solid #bfdbfe !important;">
+                <div class="card-body p-4 text-primary-emphasis">
+                    <h6 class="fw-bold mb-2 text-blue-900"><i class="fas fa-info-circle me-1 text-primary"></i> Seating & Pricing</h6>
+                    <p class="small mb-0 text-blue-800" style="line-height: 1.45; font-size: 12px;">
+                        Ticket prices entered above are **Flat Prices**. The platform will save this price directly for all generated seats. Staff can override individual seat prices in the admin interface.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Active Schedules List -->
+        <div class="col-lg-7">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-header bg-white p-3 border-bottom d-flex align-items-center justify-content-between">
+                    <h5 class="fw-bold text-dark mb-0"><i class="fas fa-list-ul text-primary me-2"></i>Upcoming Schedules</h5>
+                    <span class="badge bg-primary bg-opacity-10 text-primary fw-bold font-monospace px-2.5 py-1 rounded-pill">
+                        {{ schedules|length }} Slots
+                    </span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive" style="max-height: 520px; overflow-y: auto;">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light sticky-top" style="z-index: 1;">
+                                <tr>
+                                    <th class="ps-4">Date & Time</th>
+                                    <th>Price</th>
+                                    <th class="pe-4 text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for s in schedules %}
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="fw-bold text-dark">{{ s.date|date:"l, d M Y" }}</div>
+                                        <div class="text-muted small"><i class="far fa-clock me-1"></i>{{ s.departure_time|time:"h:i A" }}</div>
+                                    </td>
+                                    <td>
+                                        <form method="post" action="{% url 'dashboard_schedules' %}" class="d-flex align-items-center gap-2">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="update_price">
+                                            <input type="hidden" name="schedule_id" value="{{ s.id }}">
+                                            
+                                            <div class="input-group input-group-sm" style="width: 130px;">
+                                                <span class="input-group-text bg-light text-muted fw-semibold">Rs.</span>
+                                                <input type="number" name="new_price" class="form-control text-center font-monospace fw-bold" 
+                                                       value="{{ s.price_inclusive|floatformat:0 }}" required min="1">
+                                            </div>
+                                            <button type="submit" class="btn btn-sm btn-dark fw-bold rounded-2 px-2.5">
+                                                Update
+                                            </button>
+                                        </form>
+                                    </td>
+                                    <td class="pe-4 text-end">
+                                        <a href="{% url 'schedule_seats' s.id %}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-2 px-3 fw-medium me-1">
+                                            <i class="fas fa-eye me-1"></i>View Map
+                                        </a>
+                                        <form method="post" action="{% url 'dashboard_schedules' %}" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this schedule and all its seats?');">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="delete">
+                                            <input type="hidden" name="schedule_id" value="{{ s.id }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-2 px-3 fw-medium" {% if s.has_bookings %}disabled title="Cannot delete schedule with active bookings"{% endif %}>
+                                                <i class="fas fa-trash-alt me-1"></i>Delete
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted py-5">
+                                        <div class="mb-3 text-muted opacity-50"><i class="far fa-calendar-times fa-3x"></i></div>
+                                        <h6 class="fw-bold">No Upcoming Schedules Found</h6>
+                                        <p class="small mb-0">Use the form on the left to batch-generate operational slots.</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

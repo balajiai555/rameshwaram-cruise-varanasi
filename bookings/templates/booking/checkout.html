@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+{% block title %}Checkout{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <div class="row g-4 justify-content-center">
+        <div class="col-lg-8">
+            <div class="card mb-4"><div class="card-body">
+                <h4 class="fw-bold mb-1"><i class="fas fa-user text-primary me-2"></i>Contact Details</h4>
+                <p class="text-muted small mb-4">We'll email your ticket here. No account needed.</p>
+                <form id="checkoutForm">{% csrf_token %}
+                    <input type="hidden" id="scheduleId" value="{{ schedule.id }}">
+                    <input type="hidden" id="seatIds" value="{{ seat_ids }}">
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="form-label small fw-bold">Full Name *</label>
+                            <input type="text" id="guestName" class="form-control" required placeholder="Your name" value="{{ prefill_name|default:'' }}"></div>
+                        <div class="col-md-6"><label class="form-label small fw-bold">Phone *</label>
+                            <input type="tel" id="guestPhone" class="form-control" required placeholder="10-digit number"></div>
+                        <div class="col-12"><label class="form-label small fw-bold">Email * <span class="text-muted fw-normal">(ticket sent here)</span></label>
+                            <input type="email" id="guestEmail" class="form-control" required placeholder="you@example.com" value="{{ prefill_email }}"></div>
+                        <div class="col-12"><label class="form-label small fw-bold">Billing Address * <span class="text-muted fw-normal">(required for GST Bill of Supply)</span></label>
+                            <textarea id="guestAddress" class="form-control" rows="2" required placeholder="Enter your city, state address"></textarea></div>
+                        <div class="col-12 mt-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="privacyPolicyAgree" required>
+                                <label class="form-check-label small text-muted" for="privacyPolicyAgree">
+                                    I agree to the <a href="{% url 'privacy_policy' %}" target="_blank" class="fw-bold text-decoration-none">Data Use, Privacy & Policy</a> terms. I consent to Rameshwaram Cruises collecting and processing my details to facilitate this booking, ensure compliance with port authorities, and manage travel communications.
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div></div>
+
+            <div class="card"><div class="card-body">
+                <h4 class="fw-bold mb-1"><i class="fas fa-user-friends text-primary me-2"></i>Passenger Details</h4>
+                <p class="text-muted small mb-4">One ID is required for the primary booker (used at boarding). Additional passengers only need a name.</p>
+
+                <div class="card mb-3 border-0" style="background:#f8f9fa;"><div class="card-body">
+                    <h6 class="fw-bold text-primary mb-3"><i class="fas fa-star me-1"></i>Primary Passenger — Seat {{ seats.0.seat_number }} ({{ active_row }})</h6>
+                    <div class="row g-3">
+                        <div class="col-md-6"><label class="form-label small fw-bold">Full Name *</label>
+                            <input type="text" id="primaryName" class="form-control" required placeholder="Enter name" value="{{ prefill_name|default:'' }}"></div>
+                        <div class="col-md-3"><label class="form-label small fw-bold">ID Type *</label>
+                            <select id="primaryIdType" class="form-control" required>
+                                <option value="">Select…</option>
+                                {% for value, label in id_types %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+                            </select></div>
+                        <div class="col-md-3"><label class="form-label small fw-bold">ID Number *</label>
+                            <input type="text" id="primaryIdNumber" class="form-control" required placeholder="ID number"></div>
+                    </div>
+                </div></div>
+
+                {% for seat in seats|slice:"1:" %}
+                <div class="card mb-3 border-0" style="background:#f8f9fa;"><div class="card-body">
+                    <h6 class="fw-bold text-secondary mb-3"><i class="fas fa-chair me-1"></i>Seat {{ seat.seat_number }} ({{ seat.row_label }})</h6>
+                    <div class="row g-3">
+                        <div class="col-md-8"><label class="form-label small fw-bold">Passenger Name *</label>
+                            <input type="text" class="form-control passenger-name" required placeholder="Name on this seat"></div>
+                    </div>
+                </div></div>
+                {% endfor %}
+            </div></div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card sticky-top" style="top:20px;"><div class="card-body">
+                <h5 class="fw-bold mb-3">Order Summary</h5>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1"><span class="text-muted">{{ schedule.cruise.name }}</span></div>
+                    <div class="d-flex justify-content-between mb-1"><span class="text-muted">{{ schedule.date|date:"D, d M" }} · {{ schedule.departure_time|time:"h:i A" }}</span></div>
+                    <div class="d-flex justify-content-between mb-1"><span class="text-muted">{{ seats|length }} seat(s) in row {{ active_row }}</span></div>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between mb-2"><span>Subtotal</span><span>Rs.{{ subtotal|floatformat:0 }}</span></div>
+                <div class="d-flex justify-content-between mb-3"><span>GST (5%)</span><span>Rs.{{ gst|floatformat:0 }}</span></div>
+                <div class="d-flex justify-content-between"><span class="h5 fw-bold">Total</span><span class="h5 fw-bold text-primary" id="totalDisplay">Rs.{{ total|floatformat:0 }}</span></div>
+                <div class="alert alert-info small mt-3 mb-2 py-2" id="holdStaticAlert">
+                    <i class="fas fa-clock me-1"></i>Seats held for {{ hold_minutes }} min once you start payment.
+                </div>
+                <div class="alert alert-warning small mt-3 mb-2 py-2 text-dark fw-medium" id="timerAlert" style="display:none;">
+                    <i class="fas fa-hourglass-half text-warning me-1"></i>
+                    Time remaining to pay: <span id="countdownTimer" class="fw-bold text-danger">07:00</span>
+                </div>
+                <button class="btn btn-primary w-100 mt-2 btn-lg" id="payBtn" onclick="initiatePayment()"><i class="fas fa-lock me-2"></i>Pay Rs.<span id="payAmount">{{ total|floatformat:0 }}</span></button>
+                 
+                 <div class="mt-4 p-3 bg-light border-start border-warning border-3" style="border-radius: 4px;">
+                     <h6 class="fw-bold text-dark mb-2"><i class="fas fa-info-circle text-warning me-1"></i> Important Policies</h6>
+                     <ul class="list-unstyled mb-0 small text-secondary">
+                         <li class="mb-2 d-flex align-items-start">
+                             <i class="fas fa-exclamation-circle text-danger me-2 mt-1"></i>
+                             <span><strong>Refund Policy:</strong> No refund were made for cancelation of ticket.</span>
+                         </li>
+                         <li class="d-flex align-items-start">
+                             <i class="fas fa-child text-success me-2 mt-1"></i>
+                             <span><strong>Child Policy:</strong> children up to age 5 year can travel free but need dob proff where traveler realtion mentioned.</span>
+                         </li>
+                     </ul>
+                 </div>
+            </div></div>
+        </div>
+    </div>
+</div>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+let countdownInterval = null;
+
+function releaseBooking(bookingId) {
+    fetch('/bookings/api/release-booking/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value},
+        body: JSON.stringify({ booking_id: bookingId })
+    })
+    .then(r => r.json())
+    .then(data => {
+        console.log("Hold released successfully:", data);
+    })
+    .catch(e => console.error("Error releasing hold:", e));
+}
+
+function startCountdown(holdExpiresAt, bookingId) {
+    if (countdownInterval) clearInterval(countdownInterval);
+    const expiryTime = new Date(holdExpiresAt).getTime();
+    const timerEl = document.getElementById('countdownTimer');
+
+    function updateTimer() {
+        const now = new Date().getTime();
+        const distance = expiryTime - now;
+
+        if (distance <= 0) {
+            clearInterval(countdownInterval);
+            timerEl.textContent = '00:00';
+            alert('Your seat reservation has expired. Please select seats again.');
+            releaseBooking(bookingId);
+            window.location.href = "{% url 'schedule_seats' schedule.id %}";
+            return;
+        }
+
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        timerEl.textContent = 
+            (minutes < 10 ? '0' : '') + minutes + ':' + 
+            (seconds < 10 ? '0' : '') + seconds;
+    }
+
+    document.getElementById('holdStaticAlert').style.display = 'none';
+    document.getElementById('timerAlert').style.display = 'block';
+
+    updateTimer();
+    countdownInterval = setInterval(updateTimer, 1000);
+}
+
+function initiatePayment() {
+    const btn = document.getElementById('payBtn');
+    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+    const guestName = document.getElementById('guestName').value.trim();
+    const guestEmail = document.getElementById('guestEmail').value.trim();
+    const guestPhone = document.getElementById('guestPhone').value.trim();
+    const guestAddress = document.getElementById('guestAddress').value.trim();
+    const primaryName = document.getElementById('primaryName').value.trim();
+    const primaryIdType = document.getElementById('primaryIdType').value;
+    const primaryIdNumber = document.getElementById('primaryIdNumber').value.trim();
+    const passengerNames = Array.from(document.querySelectorAll('.passenger-name')).map(i => i.value.trim());
+    const reset = () => { btn.disabled = false; btn.innerHTML = '<i class="fas fa-lock me-2"></i>Pay Rs.' + document.getElementById('payAmount').textContent; };
+    if (!guestName || !guestEmail || !guestPhone || !guestAddress) { alert('Please fill your name, email, phone, and billing address.'); reset(); return; }
+    if (!document.getElementById('privacyPolicyAgree').checked) { alert('You must agree to the Data Use, Privacy & Policy terms.'); reset(); return; }
+    if (!primaryName) { alert('Please enter the primary passenger name.'); reset(); return; }
+    if (!primaryIdType || !primaryIdNumber) { alert('Primary passenger ID proof is required for boarding.'); reset(); return; }
+    for (let n of passengerNames) { if (!n) { alert('Please enter a name for every additional passenger.'); reset(); return; } }
+    fetch('/bookings/api/create-order/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value},
+        body: JSON.stringify({
+            schedule_id: document.getElementById('scheduleId').value,
+            seat_ids: document.getElementById('seatIds').value,
+            guest_name: guestName, guest_email: guestEmail, guest_phone: guestPhone, guest_address: guestAddress,
+            primary_name: primaryName, primary_id_type: primaryIdType, primary_id_number: primaryIdNumber,
+            passenger_names: passengerNames,
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) { alert(data.error); reset(); return; }
+        startCountdown(data.hold_expires_at, data.booking_id);
+        const options = {
+            key: '{{ razorpay_key }}', amount: data.amount, currency: 'INR',
+            name: 'Cruise Booking', description: 'Booking ' + data.booking_number,
+            order_id: data.order_id,
+            handler: function(response) { verifyPayment(response); },
+            modal: { ondismiss: function() { reset(); releaseBooking(data.booking_id); } },
+            theme: {color: '#0d6efd'}
+        };
+        new Razorpay(options).open();
+    })
+    .catch(e => { alert('Network error. Please try again.'); reset(); });
+}
+function verifyPayment(response) {
+    fetch('/bookings/api/verify-payment/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value},
+        body: JSON.stringify({
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) { 
+            if (countdownInterval) clearInterval(countdownInterval);
+            window.location.href = data.ticket_url; 
+        }
+        else { alert(data.error || 'Payment failed'); document.getElementById('payBtn').disabled = false; }
+    });
+}
+</script>
+{% endblock %}

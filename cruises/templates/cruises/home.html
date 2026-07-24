@@ -1,0 +1,379 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Book Your Cruise{% endblock %}
+
+{% block extra_css %}
+<!-- Flatpickr Custom Theme Stylesheet -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    /* Custom Flatpickr Overrides to match App Design */
+    .flatpickr-calendar {
+        border-radius: 16px !important;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.1) !important;
+        border: 1px solid #e2e8f0 !important;
+        padding: 6px;
+    }
+
+    .flatpickr-day.selected {
+        background: var(--primary) !important;
+        border-color: var(--primary) !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<style>
+    /* Premium Minimalist Hero Section */
+    .hero-search-bg {
+        background: var(--navbar-gradient);
+        padding: 6.5rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-search-bg::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at 80% 20%, rgba(245, 158, 11, 0.12) 0%, transparent 50%);
+        pointer-events: none;
+        z-index: 2;
+    }
+
+    .hero-search-bg::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: url('{% static "images/background.avif" %}');
+        background-size: cover;
+        background-position: center;
+        opacity: 0.22;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .hero-search-bg>.container {
+        position: relative;
+        z-index: 3;
+    }
+
+    /* Large Custom Desktop View Search Deck */
+    .search-panel-wrapper {
+        background: #ffffff;
+        border-radius: 24px;
+        padding: 12px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        max-width: 680px;
+        margin: 0 auto;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Custom Input Framework styling */
+    .picker-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+        flex-grow: 1;
+        background: #f8fafc;
+        border: 2px solid #e2e8f0;
+        border-radius: 16px;
+        transition: all 0.2s ease;
+    }
+
+    .picker-container:focus-within {
+        border-color: var(--primary);
+        background: #ffffff;
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+    }
+
+    .custom-date-trigger {
+        background: transparent !important;
+        border: none !important;
+        font-weight: 600;
+        color: #1e293b;
+        font-size: 1.15rem;
+        /* Big on Computer */
+        padding: 14px 16px 14px 0px !important;
+        cursor: pointer;
+    }
+
+    @media (max-width: 768px) {
+        .custom-date-trigger {
+            font-size: 1rem;
+            /* Scaled down relative on Mobile */
+            padding: 10px 12px 10px 0px !important;
+        }
+    }
+
+    /* Utility Shortcuts Quick Chips */
+    .utility-badge-link {
+        background: rgba(255, 255, 255, 0.1);
+        color: #94a3b8;
+        font-size: 0.8rem;
+        font-weight: 700;
+        padding: 6px 14px;
+        border-radius: 30px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .utility-badge-link:hover {
+        background: var(--primary);
+        color: #ffffff;
+        transform: translateY(-1px);
+    }
+
+    /* Core Dynamic Cards Layout definitions */
+    .cruise-card {
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04);
+        background: #ffffff;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+    }
+
+    .cruise-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.09);
+    }
+
+    .card-img-wrapper {
+        position: relative;
+        overflow: hidden;
+        height: 220px;
+    }
+
+    .card-img-wrapper img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+
+    .cruise-card:hover .card-img-wrapper img {
+        transform: scale(1.05);
+    }
+
+    .floating-badge {
+        position: absolute;
+        padding: 6px 14px;
+        font-weight: 700;
+        font-size: 0.75rem;
+        border-radius: 30px;
+        backdrop-filter: blur(8px);
+    }
+
+    .badge-duration {
+        top: 14px;
+        end: 14px;
+        background: rgba(15, 23, 42, 0.75);
+        color: #ffffff;
+    }
+
+    .badge-dates {
+        top: 14px;
+        start: 14px;
+        background: rgba(34, 197, 94, 0.9);
+        color: #ffffff;
+    }
+
+    .date-chip {
+        background: #f1f5f9;
+        color: #475569;
+        font-weight: 600;
+        font-size: 0.78rem;
+        padding: 6px 12px;
+        border-radius: 8px;
+        text-decoration: none;
+        border: 1px solid transparent;
+    }
+
+    .date-chip:hover {
+        background: #fffbeb;
+        color: var(--primary);
+        border-color: #fde68a;
+    }
+
+    .route-strip {
+        background: #f8fafc;
+        border-radius: 10px;
+        padding: 8px 12px;
+        font-weight: 600;
+    }
+</style>
+
+<!-- Hero Custom Presentation Section -->
+<div class="hero-search-bg text-white">
+    <div class="container text-center">
+        <h1 class="display-4 fw-extrabold mb-3 tracking-tight">Rameshwaram Cruise Varanasi</h1>
+        <p class="fs-5 opacity-75 mb-4 max-w-2xl mx-auto fw-medium">Experience luxury Ganga cruise bookings. Witness the
+            historic Dashashwamedh Ghat Aarti, live music & Varanasi heritage storytelling onboard.</p>
+
+        <div class="search-panel-wrapper mb-3">
+            <form method="get" id="searchForm" action="{% url 'home' %}#fleet-results">
+                <div class="d-flex flex-column flex-md-row gap-2 align-items-stretch">
+                    <div class="picker-container px-3">
+                        <i class="far fa-calendar-alt text-muted fs-4 me-3"></i>
+                        <input type="text" id="customDatePicker" name="date" class="form-control custom-date-trigger"
+                            placeholder="Select Departure Date" value="{{ selected_date|date:'Y-m-d' }}">
+                    </div>
+                    <button type="submit" class="btn btn-primary px-4 fw-bold rounded-3 fs-5 shadow-sm py-3 py-md-0">
+                        Search Fleet
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="d-flex justify-content-center gap-2 flex-wrap mb-4">
+            <a href="#" class="utility-badge-link {% if selected_date == today %}bg-primary text-white border-0{% endif %}" onclick="setQuickDate(0)">Today</a>
+            <a href="#" class="utility-badge-link {% if selected_date == tomorrow %}bg-primary text-white border-0{% endif %}" onclick="setQuickDate(1)">Tomorrow</a>
+            {% if selected_date %}
+            <a href="{% url 'home' %}" class="utility-badge-link bg-danger bg-opacity-25 text-danger border-0"><i
+                    class="fas fa-times-circle me-1"></i>Reset Filter</a>
+            {% endif %}
+        </div>
+
+        {% if selected_date %}
+        <p class="small mb-0 opacity-75 fw-medium">
+            Operational departures displayed on <span class="text-info fw-bold">{{ selected_date|date:"l, d F Y" }}</span>
+        </p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Main Voyages Cards View -->
+<div class="container py-5" id="fleet-results">
+    {% if selected_date and not cruises %}
+    <div class="text-center py-5 my-4">
+        <div class="bg-light d-inline-flex p-4 rounded-circle mb-4 text-muted"><i
+                class="fas fa-calendar-times fa-3x"></i></div>
+        <h4 class="text-dark fw-bold">No Voyages Available</h4>
+        <p class="text-muted mb-4">There are no operational cruise departures on {{ selected_date|date:"d/m/Y" }}.</p>
+        <a href="{% url 'home' %}" class="btn btn-outline-primary fw-bold px-4 rounded-3">See All Upcoming Schedules</a>
+    </div>
+    {% endif %}
+
+    <div class="row g-4">
+        {% for cruise in cruises %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 cruise-card">
+                <div class="card-img-wrapper">
+                    {% if cruise.image %}
+                    <img src="{{ cruise.image.url }}" alt="{{ cruise.name }}">
+                    {% else %}
+                    <div class="w-100 h-100 d-flex align-items-center justify-content-center text-muted"><i
+                            class="fas fa-ship fa-3x opacity-20"></i></div>
+                    {% endif %}
+
+                    <span class="floating-badge badge-duration"><i class="far fa-clock me-1 text-info"></i> {{ cruise.duration_hours }}h</span>
+                    {% if cruise.upcoming_dates %}
+                    <span class="floating-badge badge-dates"><i class="far fa-calendar-check me-1"></i> {{ cruise.upcoming_dates|length }} Dates</span>
+                    {% endif %}
+                </div>
+
+                <div class="card-body p-4 d-flex flex-column justify-content-between">
+                    <div>
+                        <h5 class="card-title fw-bold text-dark mb-3 fs-5">{{ cruise.name }}</h5>
+
+                        <div class="route-strip text-secondary mb-3 d-flex align-items-center"
+                            style="font-size: 0.88rem;">
+                            <i class="fas fa-map-marker-alt text-primary me-2"></i>
+                            <span class="text-truncate">{{ cruise.from_port }}</span>
+                            <i class="fas fa-arrow-right mx-2 text-muted small" style="font-size: 11px;"></i>
+                            <span class="text-truncate">{{ cruise.to_port }}</span>
+                        </div>
+
+                        <p class="card-text text-secondary small lh-base mb-4">{{ cruise.description|truncatewords:15 }}
+                        </p>
+
+                        {% if cruise.upcoming_dates %}
+                        <div class="mb-4">
+                            <small class="text-muted fw-bold text-uppercase d-block mb-2"
+                                style="font-size:10px; letter-spacing: 0.5px;">Upcoming Departures</small>
+                            <div class="d-flex flex-wrap gap-2">
+                                {% for d in cruise.upcoming_dates|slice:":3" %}
+                                <a href="?date={{ d|date:'Y-m-d' }}" class="date-chip shadow-sm">{{ d|date:"d/m" }}</a>
+                                {% endfor %}
+                                {% if cruise.upcoming_dates|length > 3 %}
+                                <a href="{% url 'cruise_detail' cruise.id %}" class="date-chip bg-white border text-primary py-1 fw-bold shadow-sm"
+                                   style="text-decoration: none;">+{{ cruise.upcoming_dates|length|add:'-3' }}</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="bg-light p-2 rounded-3 text-secondary small text-center mb-4"><i
+                                class="fas fa-info-circle me-1 text-warning"></i> Check back soon for future runs</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex align-items-center justify-content-between pt-3 border-top border-light mt-auto">
+                        <div>
+                            <span class="text-muted d-block small" style="font-size: 11px;">Fares From</span>
+                            <span class="h4 fw-bold text-primary mb-0">
+                                {% if cruise.next_schedule %}
+                                    Rs.{{ cruise.next_schedule.price|floatformat:0 }}
+                                {% else %}
+                                    Rs.{{ cruise.base_price|floatformat:0 }}
+                                {% endif %}
+                            </span>
+                        </div>
+
+                        {% if cruise.next_schedule %}
+                        <a href="{% url 'schedule_seats' cruise.next_schedule.id %}"
+                            class="btn btn-primary px-3 fw-bold rounded-3">
+                            {% if selected_date %}Book Ticket
+                            {% else %}Select Seats{% endif %}
+                            <i class="fas fa-chevron-right ms-1 small" style="font-size: 10px;"></i>
+                        </a>
+                        {% else %}
+                        <button class="btn btn-light text-muted fw-bold rounded-3 px-3 border border-light"
+                            disabled>Sold Out</button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        {% if not selected_date %}
+        <div class="col-12 text-center py-5 my-5 text-muted">
+            <i class="fas fa-compass fa-3x mb-3 opacity-30 fa-spin" style="animation-duration: 10s;"></i>
+            <h4 class="fw-bold text-dark mb-2">Operational Deck Empty</h4>
+            <p class="small">Please pick a date window above to retrieve cruise routes currently accepting passengers.
+            </p>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Flatpickr Core JS Engine Wrapper -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+    // Initialize standard beautiful custom format date engine
+    const fp = flatpickr("#customDatePicker", {
+        dateFormat: "Y-m-d",        // Value format sent to Django backend views
+        altInput: true,             // User interfaces display format mapping layer
+        altFormat: "d/m/Y",         // Force dd/mm/yyyy display structure safely
+        minDate: "today",           // Prevent backward historical bookings selection
+        disableMobile: "true"       // Prevents visual framework crashing across iOS/Android systems
+    });
+
+    // Handle Quick Utility Action Targets (Today / Tomorrow selection hooks)
+    function setQuickDate(daysOffset) {
+        const targetDate = new Date();
+        targetDate.setDate(targetDate.getDate() + daysOffset);
+        fp.setDate(targetDate, true);
+        document.getElementById("searchForm").submit();
+    }
+</script>
+{% endblock %}

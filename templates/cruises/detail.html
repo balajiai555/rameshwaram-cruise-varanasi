@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% block title %}{{ cruise.name }}{% endblock %}
+
+{% block content %}
+<style>
+    /* Modern Breadcrumb Styling */
+    .breadcrumb {
+        background: transparent;
+        padding: 0;
+    }
+    .breadcrumb-item + .breadcrumb-item::before {
+        content: "›";
+        font-size: 1.2rem;
+        line-height: 1;
+        vertical-align: -2px;
+    }
+
+    /* Hero Banner Image Optimization */
+    .cruise-hero-img {
+        height: 360px;
+        object-fit: cover;
+        border-radius: 16px 16px 0 0;
+    }
+
+    /* Main Content Card Layout */
+    .detail-card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        background: #ffffff;
+        overflow: hidden;
+    }
+
+    /* Glassmorphic Schedule Panel Container */
+    .schedule-card {
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+    }
+
+    /* Polished Interactive Flex Blocks for Schedules */
+    .schedule-strip {
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        transition: all 0.2s ease-in-out;
+    }
+    .schedule-strip:hover {
+        background-color: #f1f5f9;
+        border-color: #cbd5e1;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    }
+
+    /* Route Indicators */
+    .route-badge {
+        background: #eff6ff;
+        color: #2563eb;
+        padding: 6px 14px;
+        border-radius: 30px;
+        font-weight: 600;
+        font-size: 0.88rem;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .seat-status-pill {
+        font-size: 0.8rem;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 20px;
+    }
+</style>
+
+<div class="container py-5">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}" class="text-decoration-none text-muted">Home</a></li>
+            <li class="breadcrumb-item active fw-semibold text-dark">{{ cruise.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card detail-card">
+                {% if cruise.image %}
+                    <img src="{{ cruise.image.url }}" class="card-img-top cruise-hero-img" alt="{{ cruise.name }}">
+                {% endif %}
+                <div class="card-body p-4 p-md-5">
+                    <h2 class="fw-extrabold text-dark mb-3">{{ cruise.name }}</h2>
+                    
+                    <div class="d-flex align-items-center flex-wrap gap-3 mb-4">
+                        <span class="route-badge shadow-sm">
+                            <i class="fas fa-route me-2 text-primary"></i>
+                            {{ cruise.from_port }} <i class="fas fa-arrow-right mx-2 text-primary small"></i> {{ cruise.to_port }}
+                        </span>
+                        <span class="text-secondary fw-medium fs-7">
+                            <i class="far fa-clock text-primary me-2"></i>{{ cruise.duration_hours }} Hours Journey
+                        </span>
+                    </div>
+                    
+                    <hr class="text-muted opacity-25 my-4">
+                    
+                    <h5 class="fw-bold text-dark mb-3">About this Cruise</h5>
+                    <p class="text-secondary lh-lg mb-0" style="font-size: 0.95rem;">{{ cruise.description }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card schedule-card sticky-top p-3" style="top:24px; z-index:10;">
+                <div class="card-body">
+                    <h5 class="fw-bold text-dark mb-3">Select Schedule</h5>
+                    <p class="text-muted small mb-4">Choose an upcoming departure date to access the deck seating map configuration.</p>
+                    
+                    <div class="d-flex flex-column gap-3" style="max-height: 400px; overflow-y: auto; padding-right: 2px;">
+                        {% for schedule in schedules %}
+                        <div class="d-flex align-items-center justify-content-between p-3 schedule-strip">
+                            <div>
+                                <div class="fw-bold text-dark mb-1" style="font-size: 0.95rem;">{{ schedule.date|date:"D, d M Y" }}</div>
+                                <span class="badge bg-light text-secondary border border-light px-2 py-1"><i class="far fa-clock me-1 text-primary"></i>{{ schedule.departure_time|time:"h:i A" }}</span>
+                            </div>
+                            <div class="text-end">
+                                <span class="d-block seat-status-pill bg-success bg-opacity-10 text-success mb-2">
+                                    {{ schedule.available_seats_count }} Seats Available
+                                </span>
+                                <a href="{% url 'schedule_seats' schedule.id %}" class="btn btn-sm btn-primary px-3 fw-bold rounded-3">
+                                    Select <i class="fas fa-chevron-right ms-1 small"></i>
+                                </a>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-calendar-times text-muted fa-2x mb-3 opacity-50"></i>
+                            <p class="text-muted text-center my-0 small">No upcoming schedules available for this voyage.</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

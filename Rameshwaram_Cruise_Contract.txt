@@ -1,0 +1,141 @@
+========================================================================
+     SOFTWARE DEVELOPMENT, DEPLOYMENT & ANNUAL MAINTENANCE AGREEMENT
+========================================================================
+
+This Software Development, Deployment, and Annual Maintenance Agreement 
+("Agreement") is made and entered into this _____ day of _______________, 2026, by and between:
+
+CLIENT:
+Name: Rameshwaram Cruise (Vessel Operations)
+Represented By: [Client Name / Owner]
+Address: Varanasi, Uttar Pradesh, India
+(Hereinafter referred to as the "Client")
+
+AND
+
+DEVELOPER:
+Name: [Developer/Company Name]
+Represented By: [Developer Lead]
+Address: [Developer Address]
+(Hereinafter referred to as the "Developer")
+
+The Client and the Developer may collectively be referred to as "Parties" 
+and individually as "Party".
+
+------------------------------------------------------------------------
+1. SCOPE OF SERVICES & DELIVERABLES
+------------------------------------------------------------------------
+The Developer shall design, develop, test, and deploy a web-based ticket 
+reservation and inventory management application for the Client. The specific 
+scope of deliverables includes:
+
+1.1 Booking Funnel & Ticketing System
+* Interactive, mobile-responsive seat selection layout (60 seats matching 
+  vessel deck architecture R1..R10 x 6 layout).
+* Real-time seat lock mechanism (7-minute hold) to prevent double-booking.
+* Billing Address collection on checkout page.
+* Automated dynamic PDF e-ticket generation and delivery to the customer's 
+  email via SMTP gateway.
+* Boarding credential checks for passengers.
+
+1.2 Administrative Staff Dashboard
+* Batch Schedule Generator: Interface to create daily slots in bulk over 
+  custom date ranges with specific time slots.
+* Dynamic Surge Pricing Control: Quick interface to adjust seat prices for 
+  festival slots (e.g. surge up to Rs. 5,000) directly, without accessing 
+  Django's admin backend.
+* Chronological Bookings Manager: Clean list views of active reservations 
+  sorted by date/month/year, omitting redundant layout fields.
+* Staff 2-Factor Authentication (2FA): OTP verification step for staff log-ins 
+  to prevent unauthorized admin access.
+
+1.3 Production Server Deployment (VPS Setup)
+* Installation and configuration of Gunicorn WSGI gateway processes and 
+  Nginx reverse proxy blocks on the Client's Linux Ubuntu VPS.
+* Configuration of secure SSL (HTTPS) encryption certificates via Let's Encrypt.
+* Database setup (PostgreSQL) and automated background cron tasks to release 
+  expired reservations.
+
+------------------------------------------------------------------------
+2. INFRASTRUCTURE & CREDENTIALS (CLIENT PROVIDES)
+------------------------------------------------------------------------
+* The Client shall provide and bear all operational costs for necessary 
+  infrastructure services including: Linux VPS hosting (e.g. Hostinger, AWS), 
+  Domain name routing, SMTP email server credentials (e.g. Mailgun, SendGrid), 
+  and Razorpay payment gateway merchant credentials.
+* The Developer is not responsible for server uptime, payment processor 
+  delays, or email service delivery failures caused by third-party 
+  infrastructure providers.
+
+------------------------------------------------------------------------
+3. FEES, PAYMENT SCHEDULE & MILESTONES
+------------------------------------------------------------------------
+* One-Time Development Cost: The Client agrees to pay the Developer a flat, 
+  one-time development and deployment fee of Rs. 25,000 (Rupees Twenty-Five 
+  Thousand Only).
+* Annual Maintenance Fee: Maintenance and support for the first year (Year 1) 
+  is included at no additional cost. Starting from the second year (Year 2) 
+  onwards, the Client agrees to pay a maintenance fee of Rs. 6,000 per annum 
+  (Rupees Six Thousand per Year) for ongoing support and maintenance.
+* Milestone Payments:
+  1. Advance Deposit: [Percentage]% of the total fee (Rs. [Amount]) upon 
+     signing of this Agreement.
+  2. Production Handoff: [Percentage]% of the total fee (Rs. [Amount]) upon 
+     completion of verification tests and successful deployment on the live server.
+
+------------------------------------------------------------------------
+4. INTELLECTUAL PROPERTY, MAINTENANCE & LIABILITY TERMS
+------------------------------------------------------------------------
+* Code Ownership & Developer Reuse Rights: 
+  * Transfer of Ownership: Source code and operational assets for this specific 
+    vessel installation will be handed over and transferred to the Client ONLY 
+    upon full and final payment of all project dues.
+  * Developer Reuse Rights: The Developer retains a perpetual, royalty-free, 
+    non-exclusive, worldwide license to reuse, modify, adapt, and distribute the 
+    underlying codebase architecture, template structures, Django models, helper 
+    utilities, and logic in any of the Developer's other software projects 
+    for other clients.
+  * Brand Protection: The Developer agrees not to copy or reuse the Client's 
+    specific branding assets, logos, proprietary customer databases, or 
+    localized cruise content, ensuring zero interference, legal liability, or 
+    security risk to the Client's live production platform.
+* Maintenance Period Scope & Limitations:
+  * Bugs and Errors: Any software bugs, errors, or code exceptions directly 
+    introduced by the Developer will be resolved at no additional cost.
+  * System Settings: General environment updates (such as email SMTP credentials, 
+    Razorpay key rotations, and domain linkage) are covered under the 
+    annual maintenance package.
+  * Minor Modifications: Basic text edits, image swaps, and styling tweaks 
+    are limited to a maximum of 2 requests (or 2 hours of development labor) 
+    per calendar month. Any request beyond this limit will be billed as a 
+    separate work order.
+  * New Features: Major layout shifts, page additions, database schema changes, 
+    or external API integrations are excluded and will be quoted separately 
+    with a custom timeline.
+* Third-Party Service Outages: The Developer is not responsible for outages 
+  or delivery failures caused by third-party systems (such as Hosting server, 
+  Gmail SMTP limits, Razorpay API issues, or ngrok tunnels). Developer time 
+  spent troubleshooting third-party system outages will be billed separately 
+  at an hourly rate.
+* Limitation of Liability: In no event shall the Developer's total liability 
+  for any claim, loss, or damages exceed the total amount actually paid by 
+  the Client under this Agreement.
+
+------------------------------------------------------------------------
+5. SIGNATURES & EXECUTION
+------------------------------------------------------------------------
+IN WITNESS WHEREOF, the Parties hereto have executed this Agreement as of 
+the date first written above.
+
+For Client (Rameshwaram Cruise):
+Signature: ___________________________
+Name: ______________________________
+Title: Authorized Signatory / Owner
+Date: ______________________________
+
+For Developer:
+Signature: ___________________________
+Name: ______________________________
+Title: Lead Developer / Freelancer
+Date: ______________________________
+========================================================================

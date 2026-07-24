@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Enter code{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center"><div class="col-md-5"><div class="card"><div class="card-body p-4">
+        <div class="text-center mb-4">
+            <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-success bg-opacity-10 text-success mb-3" style="width:60px;height:60px;"><i class="fas fa-key fa-lg"></i></div>
+            <h4 class="fw-bold">Check your inbox</h4>
+            <p class="text-muted small">We sent a 6-digit code to <strong>{{ email }}</strong></p>
+        </div>
+        {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+        <form method="post">{% csrf_token %}
+            <div class="mb-3"><label class="form-label small fw-bold">One-time code</label>
+                <input type="text" name="code" class="form-control text-center" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="123456" required autofocus style="letter-spacing:0.5em;font-size:1.4rem;font-weight:700;"></div>
+            <button type="submit" class="btn btn-primary w-100 btn-lg">Verify</button>
+        </form>
+        <div class="text-center mt-3"><small class="text-muted">Didn't get it? <a href="{% url 'customer_login' %}">Send a new code</a></small></div>
+    </div></div></div></div>
+</div>
+{% endblock %}

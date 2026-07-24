@@ -1,0 +1,1 @@
+def customer_logged_in(request): return bool(request.session.get('customer_email'))

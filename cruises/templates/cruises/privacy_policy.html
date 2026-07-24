@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}Data Use, Privacy & Policy - Rameshwaram Cruises{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
+                <div class="text-center mb-5">
+                    <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill fw-bold text-uppercase tracking-wider" style="font-size: 0.8rem;">Compliance & Security</span>
+                    <h1 class="fw-extrabold text-dark mt-2 display-6">Data Use, Privacy & Policy</h1>
+                    <p class="text-muted">Effective Date: July 21, 2026</p>
+                </div>
+
+                <div class="content text-secondary" style="font-size: 1.05rem; line-height: 1.8;">
+                    <section class="mb-5">
+                        <h4 class="fw-bold text-dark mb-3"><i class="fas fa-database text-primary me-2"></i> 1. Introduction and Data Scope</h4>
+                        <p>At Rameshwaram Cruises, we are committed to safeguarding your personal data. This privacy notice explains how we collect, use, and process your personal and contact details when you book a cruise with us or use our digital services.</p>
+                    </section>
+
+                    <section class="mb-5">
+                        <h4 class="fw-bold text-dark mb-3"><i class="fas fa-user-check text-primary me-2"></i> 2. Information We Collect and Consent</h4>
+                        <p>When placing a reservation, we collect essential primary contact details and passenger information, which include:</p>
+                        <ul>
+                            <li><strong>Primary Contact Profile:</strong> Full name, phone number, email address, and billing/communication address.</li>
+                            <li><strong>Traveler Identity:</strong> Government-issued ID card type and ID numbers for verification during boarding.</li>
+                        </ul>
+                        <p>By checking the agreement box on the checkout page, you consent to the processing of this information for the purpose of booking tickets, compliance with local port and security authorities, and transaction fulfillment.</p>
+                    </section>
+
+                    <section class="mb-5">
+                        <h4 class="fw-bold text-dark mb-3"><i class="fas fa-hand-holding-usd text-primary me-2"></i> 3. Cancellation and Refund Policy</h4>
+                        <div class="alert alert-warning border-0 p-3 mb-3 bg-warning-subtle text-dark" style="border-radius: 12px; border-left: 5px solid #ffc107 !important;">
+                            <i class="fas fa-exclamation-triangle me-2"></i><strong>Important Notice:</strong> No refund were made for cancelation of ticket. Once booked, tickets are strictly non-refundable and non-transferable.
+                        </div>
+                    </section>
+
+                    <section class="mb-5">
+                        <h4 class="fw-bold text-dark mb-3"><i class="fas fa-child text-primary me-2"></i> 4. Child Ticket Policy</h4>
+                        <p>We welcome families aboard our vessel fleet. Our ticket policies regarding young children are structured as follows:</p>
+                        <ul>
+                            <li>Children up to age 5 year can travel free of charge.</li>
+                            <li>To avail of this exemption, the traveler must present valid Date of Birth (DOB) proof during boarding.</li>
+                            <li>The DOB proof must clearly list/mention the traveler relationship.</li>
+                        </ul>
+                    </section>
+
+                    <section class="mb-5">
+                        <h4 class="fw-bold text-dark mb-3"><i class="fas fa-shield-alt text-primary me-2"></i> 5. Data Security and Sharing</h4>
+                        <p>Your details are stored securely. We do not sell or lease passenger details to any third-party marketing companies. Data is shared only with Authorized Port Authorities and security agencies to comply with legal safety frameworks.</p>
+                    </section>
+
+                    <hr class="my-5 border-light">
+
+                    <div class="text-center">
+                        <a href="{% url 'home' %}" class="btn btn-outline-primary px-4 py-2 rounded-pill fw-bold">
+                            <i class="fas fa-arrow-left me-2"></i> Back to Homepage
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,548 @@
+{% extends 'base.html' %}
+{% block title %}Select Seats{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --seat-available: #22c55e;
+        --seat-booked: #ef4444;
+        --seat-selected: #eab308;
+        --seat-dimmed: #e2e8f0;
+        --seat-border-radius: 8px;
+        --transition-speed: 0.2s;
+    }
+
+    /* Modern Breadcrumb Styling */
+    .breadcrumb {
+        background: transparent;
+        padding: 0;
+    }
+    .breadcrumb-item + .breadcrumb-item::before {
+        content: "›";
+        font-size: 1.2rem;
+        line-height: 1;
+        vertical-align: -2px;
+    }
+
+    /* Main Deck Card */
+    .deck-card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        background: #ffffff;
+    }
+
+    /* Glassmorphism Sidebar */
+    .summary-card {
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+    }
+
+    /* Vessel Front Indicator */
+    .vessel-front {
+        background: #f1f5f9;
+        color: #64748b;
+        font-weight: 700;
+        letter-spacing: 2px;
+        font-size: 0.75rem;
+        padding: 10px;
+        border-radius: 30px 30px 8px 8px;
+        margin-bottom: 2.5rem;
+        border: 1px dashed #cbd5e1;
+    }
+
+    /* Modern Badge Layout */
+    .legend-badge {
+        font-weight: 500;
+        font-size: 0.85rem;
+        padding: 8px 14px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    /* Seat Grid Wrapper & Column Strip */
+    .deck-layout-container {
+        max-width: 580px;
+        margin: 0 auto;
+        position: relative;
+        padding: 55px 35px 35px 35px;
+        /* Teak wood floorboard decking pattern */
+        background-color: #fdfdfb;
+        background-image: repeating-linear-gradient(90deg, transparent, transparent 46px, rgba(120, 53, 15, 0.025) 46px, rgba(120, 53, 15, 0.025) 48px);
+        border: 5px solid #002d62; /* Deep Navy hull outline */
+        border-top: 8px solid #be0a13; /* Crimson bow highlight */
+        /* Pointed bow at the front (top) and flat rounded stern at the back (bottom) */
+        border-radius: 240px 240px 40px 40px;
+        box-shadow: 0 25px 50px rgba(0, 45, 98, 0.15), inset 0 0 40px rgba(0, 0, 0, 0.04);
+    }
+
+    .row-label-strip {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 24px 1fr 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 8px;
+        padding-left: 40px;
+    }
+    .row-label-strip div {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #94a3b8;
+        text-align: center;
+    }
+
+    /* Row Flex Layout */
+    .seat-row-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 22px;
+    }
+
+    .row-letter {
+        width: 25px;
+        font-weight: 700;
+        color: #64748b;
+        text-align: right;
+        font-size: 0.9rem;
+        white-space: nowrap;
+    }
+
+    .seat-grid-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr 24px 1fr 1fr 1fr 1fr;
+        gap: 12px;
+        flex-grow: 1;
+    }
+    .seat-empty-spacer {
+        aspect-ratio: 1;
+        visibility: hidden;
+        pointer-events: none;
+    }
+
+    .seat-content-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1px;
+    }
+    .seat-icon {
+        font-size: 0.95rem;
+        margin-bottom: -1px;
+    }
+    .seat-num-text {
+        font-size: 0.68rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    /* Premium Isometric/Modern Seat Design */
+    .seat {
+        aspect-ratio: 0.85;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.85rem;
+        border-radius: var(--seat-border-radius);
+        cursor: pointer;
+        transition: all var(--transition-speed) ease;
+        user-select: none;
+        position: relative;
+        border: 2px solid transparent;
+    }
+
+    /* Seat States styling */
+    .seat.available {
+        background-color: #f0fdf4;
+        color: #166534;
+        border-color: #bbf7d0;
+    }
+    .seat.available:hover {
+        background-color: var(--seat-available);
+        color: #ffffff;
+        border-color: var(--seat-available);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+    }
+
+    .seat.booked {
+        background-color: #fef2f2;
+        color: #991b1b;
+        border-color: #fee2e2;
+        cursor: not-allowed;
+        opacity: 0.65;
+    }
+
+    .seat.held {
+        background-color: #fff7ed; /* soft orange */
+        color: #c2410c; /* dark orange text */
+        border-color: #ffedd5;
+        cursor: not-allowed;
+        opacity: 0.8;
+    }
+
+    @keyframes spinSlow {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    .fa-spin-slow {
+        animation: spinSlow 3s linear infinite;
+    }
+
+    .seat.selected {
+        background-color: var(--seat-selected);
+        color: #000000;
+        border-color: var(--seat-selected);
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(234, 179, 8, 0.4);
+    }
+
+    /* Dynamic Row States controlled via JavaScript */
+    .seat.row-dim {
+        opacity: 0.25;
+        pointer-events: none;
+        filter: grayscale(80%);
+    }
+
+    .seat.row-yours {
+        border-width: 2px;
+        animation: pulseHighlight 2s infinite ease-in-out;
+    }
+
+    @keyframes pulseHighlight {
+        0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.15); }
+        50% { box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.3); }
+        100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.15); }
+    }
+
+    /* Status Alert Banner */
+    #rowStatus {
+        background: #f8fafc;
+        border-left: 4px solid #3b82f6;
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-top: 1.5rem;
+    }
+
+    /* Summary Addons */
+    .active-row-badge {
+        background: #eff6ff;
+        color: #2563eb;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-weight: 600;
+        display: inline-block;
+        font-size: 0.85rem;
+    }
+
+    /* Mobile-first responsive optimizations */
+    @media (max-width: 576px) {
+        .deck-layout-container {
+            padding: 45px 12px 24px 12px !important;
+            border-radius: 140px 140px 25px 25px !important;
+            margin-left: -4px;
+            margin-right: -4px;
+        }
+        .row-letter {
+            display: none !important; /* Hide row labels (R1..R10) on mobile screens */
+        }
+        .row-label-strip {
+            padding-left: 0 !important; /* Align labels correctly since row letters are hidden */
+            gap: 6px !important;
+            margin-bottom: 6px !important;
+        }
+        .seat-grid-row {
+            gap: 6px !important;
+        }
+        .seat-row-wrapper {
+            gap: 0px !important;
+            margin-bottom: 14px !important;
+        }
+        .seat-icon {
+            font-size: 0.8rem !important;
+        }
+        .seat-num-text {
+            font-size: 0.58rem !important;
+        }
+    }
+</style>
+
+<div class="container py-5">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}" class="text-decoration-none text-muted">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'cruise_detail' schedule.cruise.pk %}" class="text-decoration-none text-muted">{{ schedule.cruise.name }}</a></li>
+            <li class="breadcrumb-item active fw-semibold text-dark">Select Seats</li>
+        </ol>
+    </nav>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card deck-card p-4">
+                <div class="card-body text-center p-0">
+                    <h4 class="fw-bold text-dark mb-1">{{ schedule.cruise.name }}</h4>
+                    <p class="text-muted small mb-4">
+                        <i class="far fa-calendar-alt me-1"></i> {{ schedule.date|date:"D, d M Y" }} 
+                        <span class="mx-2 text-light">|</span> 
+                        <i class="far fa-clock me-1"></i> {{ schedule.departure_time|time:"h:i A" }}
+                    </p>
+
+                    <div class="d-flex justify-content-center gap-2 mb-5 flex-wrap">
+                        <span class="legend-badge bg-success bg-opacity-10 text-success"><i class="fas fa-circle small"></i> Available</span>
+                        <span class="legend-badge bg-danger bg-opacity-10 text-danger"><i class="fas fa-times-circle small"></i> Booked</span>
+                        <span class="legend-badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25" style="color: #c2410c !important;"><i class="fas fa-hourglass-half small"></i> Held by another user</span>
+                        <span class="legend-badge bg-warning bg-opacity-10 text-dark"><i class="fas fa-check-circle small"></i> Selected (Yours)</span>
+                    </div>
+
+                    <div class="deck-layout-container">
+                        <div class="vessel-front"><i class="fas fa-compass fa-spin me-2 text-primary"></i> FRONT OF VESSEL</div>
+
+                        <div class="row-label-strip d-flex justify-content-between px-3 text-uppercase text-muted fw-bold mb-3" style="font-size: 11px; letter-spacing: 1px;">
+                            <span>Left Side</span>
+                            <span>Aisle</span>
+                            <span>Right Side</span>
+                        </div>
+
+                        <div id="seatGrid" class="mb-2">
+                            {% for row in grid_rows %}
+                            <div class="seat-row-wrapper">
+                                <div class="row-letter">{{ row.label }}</div>
+                                <div class="seat-grid-row">
+                                    {% for cell in row.cells %}
+                                        {% if cell.type == 'walkway' %}
+                                            <div class="aisle-spacer"></div>
+                                        {% elif cell.type == 'seat' %}
+                                            <div class="seat {{ cell.data.status }}"
+                                                 data-seat-id="{{ cell.data.id }}"
+                                                 data-price="{{ cell.data.price }}"
+                                                 data-number="{{ cell.data.seat_number }}"
+                                                 data-row="{{ cell.data.row_label }}"
+                                                 {% if cell.data.status == 'available' %}onclick="toggleSeat(this)"{% endif %}>
+                                                <div class="seat-content-wrapper">
+                                                    {% if cell.data.status == 'booked' %}
+                                                        <i class="fas fa-times-circle seat-icon"></i>
+                                                    {% elif cell.data.status == 'held' %}
+                                                        <i class="fas fa-hourglass-half seat-icon fa-spin-slow"></i>
+                                                    {% else %}
+                                                        <i class="fas fa-chair seat-icon"></i>
+                                                    {% endif %}
+                                                    <span class="seat-num-text">{{ cell.data.seat_number }}</span>
+                                                </div>
+                                            </div>
+                                        {% else %}
+                                            <div class="seat-empty-spacer"></div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="vessel-back text-uppercase text-muted fw-bold mt-4 mb-2 text-center" style="font-size: 11px; letter-spacing: 2px;">
+                            <span class="mx-2">—</span> BACK OF VESSEL <span class="mx-2">—</span>
+                        </div>
+                    </div>
+
+                    <div id="rowStatus" class="text-start shadow-sm" style="display:none;">
+                        <div class="d-flex align-items-start gap-2">
+                            <i class="fas fa-info-circle text-primary mt-1"></i>
+                            <span id="rowStatusText" class="small text-secondary"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card summary-card sticky-top p-3" style="top:24px; z-index:10;">
+                <div class="card-body">
+                    <h5 class="fw-bold text-dark mb-3">Booking Summary</h5>
+                    
+                    <div id="activeRowBadge" class="mb-4" style="display:none;">
+                        <small class="text-muted d-block mb-1 text-uppercase tracking-wider fw-bold" style="font-size:10px;">Active Booking Row</small>
+                        <span class="active-row-badge" id="activeRowText">—</span>
+                    </div>
+
+                    <div id="selectedSeatsList" class="mb-4" style="max-height: 220px; overflow-y: auto;">
+                        <p class="text-muted text-center py-4 my-0">No seats selected yet</p>
+                    </div>
+
+                    <hr class="text-muted opacity-25">
+                    
+                    <div class="d-flex justify-content-between mb-2 text-secondary"><span>Subtotal</span><span class="fw-semibold text-dark" id="subtotal">Rs.0</span></div>
+                    
+                    <div class="d-flex justify-content-between align-items-center bg-light p-3 rounded-3 mb-3">
+                        <span class="h6 fw-bold mb-0 text-dark">Total</span>
+                        <span class="h4 fw-black text-primary mb-0" id="total">Rs.0</span>
+                    </div>
+
+                    <button class="btn btn-primary w-100 py-3 fw-bold rounded-3 shadow-sm mb-2" id="proceedBtn" disabled onclick="proceedToCheckout()">
+                        Proceed to Checkout <i class="fas fa-arrow-right ms-2 small"></i>
+                    </button>
+                    <button class="btn btn-light text-danger w-100 py-2 border-0 fw-semibold" id="resetBtn" style="display:none; font-size:13px;" onclick="resetSelection()">
+                        <i class="fas fa-undo-alt me-1"></i> Reset Selection
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+let selectedSeats = [];
+let activeRow = null;
+
+function rowAvailableCount(rowLabel) {
+    // Count seats in this row that are currently 'available' (not booked, not held, and NOT selected)
+    return document.querySelectorAll('#seatGrid .seat[data-row="' + rowLabel + '"].available').length;
+}
+
+function isRowCompletelyFull(rowLabel) {
+    if (!rowLabel) return true;
+    // Returns true ONLY when 0 available seats remain in the row
+    return rowAvailableCount(rowLabel) === 0;
+}
+
+function applyRowLock() {
+    document.querySelectorAll('#seatGrid .seat').forEach(s => {
+        if (s.classList.contains('selected') || s.classList.contains('booked') || s.classList.contains('held')) return;
+        
+        s.classList.remove('row-dim');
+        s.classList.remove('row-yours');
+        
+        if (activeRow === null) {
+            return; // Open deck if no active selection
+        } else if (s.dataset.row === activeRow) {
+            s.classList.add('row-yours'); // Highlight current working row
+        } else {
+            // Dim other rows completely unless the current row is 100% full
+            if (!isRowCompletelyFull(activeRow)) {
+                s.classList.add('row-dim');
+            } else {
+                s.classList.add('row-yours'); // Open up access if current row is full
+            }
+        }
+    });
+
+    const statusDiv = document.getElementById('rowStatus');
+    const statusText = document.getElementById('rowStatusText');
+    
+    if (activeRow === null) {
+        statusDiv.style.display = 'none';
+    } else {
+        const remaining = rowAvailableCount(activeRow);
+        statusDiv.style.display = 'block';
+        
+        if (remaining === 0) {
+            statusText.innerHTML = 'Row <strong>' + activeRow + '</strong> is full! You can now freely pick seats from any other row.';
+        } else {
+            statusText.innerHTML = 'Row <strong>' + activeRow + '</strong> has ' + remaining + ' seat(s) left. Fill this row completely to unlock other rows.';
+        }
+    }
+}
+
+function toggleSeat(el) {
+    const id = parseInt(el.dataset.seatId);
+    const price = parseFloat(el.dataset.price);
+    const number = el.dataset.number;
+    const row = el.dataset.row;
+    const icon = el.querySelector('.seat-icon');
+
+    if (el.classList.contains('selected')) {
+        // --- DESELECTING A SEAT ---
+        el.classList.remove('selected'); 
+        el.classList.add('available');
+        if (icon) icon.className = 'fas fa-chair seat-icon';
+        selectedSeats = selectedSeats.filter(s => s.id !== id);
+        
+        if (selectedSeats.length === 0) {
+            activeRow = null;
+        } else {
+            // Revert active tracking to the last selected seat row remaining
+            activeRow = selectedSeats[selectedSeats.length - 1].row;
+        }
+    } else {
+        // --- SELECTING A SEAT ---
+        if (activeRow !== null && row !== activeRow) {
+            // Trying to move to a DIFFERENT row
+            if (isRowCompletelyFull(activeRow)) {
+                activeRow = row; // Allowed! Previous row is 100% full.
+            } else {
+                // Denied! Previous row still has empty unselected options
+                const remaining = rowAvailableCount(activeRow);
+                alert('Row ' + activeRow + ' is not full yet! There are still ' + remaining + ' seat(s) available.\n\n' +
+                      'You must fill row ' + activeRow + ' completely before choosing seats in Row ' + row + '.');
+                return;
+            }
+        } else if (activeRow === null) {
+            activeRow = row; // First seat selection
+        }
+        
+        el.classList.remove('available'); 
+        el.classList.add('selected');
+        if (icon) icon.className = 'fas fa-check-circle seat-icon';
+        selectedSeats.push({id, price, number, row});
+    }
+    
+    applyRowLock();
+    updateSummary();
+}
+
+function resetSelection() {
+    document.querySelectorAll('#seatGrid .seat.selected').forEach(s => {
+        s.classList.remove('selected'); 
+        s.classList.add('available');
+        const icon = s.querySelector('.seat-icon');
+        if (icon) icon.className = 'fas fa-chair seat-icon';
+    });
+    selectedSeats = []; 
+    activeRow = null;
+    applyRowLock(); 
+    updateSummary();
+}
+
+function updateSummary() {
+    const list = document.getElementById('selectedSeatsList');
+    const subtotalEl = document.getElementById('subtotal');
+    const totalEl = document.getElementById('total');
+    const btn = document.getElementById('proceedBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const activeBadge = document.getElementById('activeRowBadge');
+    const activeText = document.getElementById('activeRowText');
+
+    if (selectedSeats.length === 0) {
+        list.innerHTML = '<p class="text-muted text-center py-4 my-0">No seats selected yet</p>';
+        subtotalEl.textContent = 'Rs.0'; totalEl.textContent = 'Rs.0';
+        btn.disabled = true; resetBtn.style.display = 'none'; activeBadge.style.display = 'none';
+        return;
+    }
+    
+    let html = ''; 
+    let subtotal = 0;
+    selectedSeats.forEach(s => {
+        subtotal += s.price;
+        html += '<div class="d-flex justify-content-between align-items-center py-2 border-bottom border-light"><span><i class="fas fa-chair text-primary me-2"></i>Seat ' + s.number + ' <small class="text-muted">(' + s.row + ')</small></span><span class="fw-bold text-dark">Rs.' + s.price + '</span></div>';
+    });
+    
+    list.innerHTML = html;
+    const total = subtotal;
+    subtotalEl.textContent = 'Rs.' + subtotal.toFixed(0);
+    totalEl.textContent = 'Rs.' + total.toFixed(0);
+    btn.disabled = false; 
+    resetBtn.style.display = 'block';
+    activeBadge.style.display = 'block';
+    activeText.textContent = 'Row ' + activeRow + ' — ' + selectedSeats.length + ' seat(s)';
+}
+
+function proceedToCheckout() {
+    const ids = selectedSeats.map(s => s.id).join(',');
+    window.location.href = '{% url "checkout" schedule.id %}?seats=' + ids;
+}
+</script>
+{% endblock %}

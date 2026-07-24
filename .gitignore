@@ -1,0 +1,34 @@
+# Django project gitignore
+
+# Compiled python files
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+
+# Local database (SQLite)
+db.sqlite3
+db.sqlite3-journal
+
+# Environment variables containing secret keys & credentials (DO NOT COMMIT)
+.env
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# User Uploaded Media files (QR codes, PDF tickets, etc.)
+media/
+static_collected/
+staticfiles/
+
+# System and IDE specific files
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+.DS_Store

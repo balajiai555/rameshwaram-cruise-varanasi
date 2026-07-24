@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% block title %}Select Seats{% endblock %}
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'cruise_detail' schedule.cruise.pk %}">{{ schedule.cruise.name }}</a></li>
+            <li class="breadcrumb-item active">Select Seats</li>
+        </ol>
+    </nav>
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="fw-bold mb-1">{{ schedule.cruise.name }}</h5>
+                    <p class="text-muted small mb-4">{{ schedule.date|date:"D, d M Y" }} · {{ schedule.departure_time|time:"h:i A" }}</p>
+
+                    <div class="d-flex justify-content-center gap-3 mb-4 flex-wrap">
+                        <span class="badge bg-success bg-opacity-10 text-success"><i class="fas fa-square me-1"></i>Available</span>
+                        <span class="badge bg-danger bg-opacity-10 text-danger"><i class="fas fa-square me-1"></i>Booked / Held</span>
+                        <span class="badge bg-warning bg-opacity-10 text-warning"><i class="fas fa-square me-1"></i>Selected</span>
+                        <span class="badge bg-secondary bg-opacity-10 text-secondary"><i class="fas fa-lock me-1"></i>Row locked</span>
+                    </div>
+
+                    <div class="vessel-front"><i class="fas fa-compass me-1"></i> FRONT OF VESSEL</div>
+
+                    <div class="row-label-strip">
+                        <div>1</div><div>2</div><div>3</div><div>4</div><div>5</div><div>6</div>
+                    </div>
+
+                    <div class="seat-grid mb-4" id="seatGrid">
+                        {% for seat in seats %}
+                        <div class="seat {{ seat.status }}"
+                             data-seat-id="{{ seat.id }}"
+                             data-price="{{ seat.price }}"
+                             data-number="{{ seat.seat_number }}"
+                             data-row="{{ seat.row_label }}"
+                             {% if seat.status == 'available' %}onclick="toggleSeat(this)"{% endif %}>
+                            {{ seat.seat_number }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card sticky-top" style="top:20px;z-index:10;">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-3">Booking Summary</h5>
+                    <div id="activeRowBadge" class="mb-3" style="display:none;">
+                        <small class="text-muted" style="font-size:11px;text-transform:uppercase;font-weight:700;">Active Row</small>
+                        <div><span class="active-row-badge" id="activeRowText">—</span></div>
+                    </div>
+                    <div id="selectedSeatsList" class="mb-3"><p class="text-muted text-center py-3">No seats selected</p></div>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-2"><span>Subtotal</span><span class="fw-bold" id="subtotal">Rs.0</span></div>
+                    <div class="d-flex justify-content-between mb-3"><span>GST (5%)</span><span class="fw-bold" id="gst">Rs.0</span></div>
+                    <div class="d-flex justify-content-between"><span class="h5 fw-bold">Total</span><span class="h5 fw-bold text-primary" id="total">Rs.0</span></div>
+                    <button class="btn btn-primary w-100 mt-3 btn-lg" id="proceedBtn" disabled onclick="proceedToCheckout()">Proceed to Checkout</button>
+                    <button class="btn btn-link w-100 mt-1 text-muted" id="resetBtn" style="display:none;font-size:13px;" onclick="resetSelection()">Reset selection</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+let selectedSeats = [];
+let activeRow = null;
+
+function applyRowLock() {
+    const grid = document.getElementById('seatGrid');
+    // Group seats by row visually via class on the grid (whole grid gets the lock class for inactive rows)
+    // Simpler approach: tag individual seats
+    document.querySelectorAll('#seatGrid .seat').forEach(s => {
+        if (s.classList.contains('selected') || s.classList.contains('booked') || s.classList.contains('held')) return;
+        if (activeRow === null) {
+            s.classList.remove('row-dim');
+        } else if (s.dataset.row === activeRow) {
+            s.classList.remove('row-dim');
+        } else {
+            s.classList.add('row-dim');
+        }
+    });
+    // Also handle the "row-locked" wrapper for the grid (used in CSS)
+    if (activeRow !== null) {
+        grid.classList.add('has-active-row');
+    } else {
+        grid.classList.remove('has-active-row');
+    }
+}
+
+function toggleSeat(el) {
+    const id = parseInt(el.dataset.seatId);
+    const price = parseFloat(el.dataset.price);
+    const number = el.dataset.number;
+    const row = el.dataset.row;
+
+    if (el.classList.contains('selected')) {
+        el.classList.remove('selected'); el.classList.add('available');
+        selectedSeats = selectedSeats.filter(s => s.id !== id);
+        if (selectedSeats.length === 0) activeRow = null;
+    } else {
+        if (activeRow === null) {
+            activeRow = row;
+        } else if (row !== activeRow) {
+            alert('All seats must be in the same row. You picked ' + activeRow + '; this seat is in ' + row + '. Deselect first or use Reset.');
+            return;
+        }
+        el.classList.remove('available'); el.classList.add('selected');
+        selectedSeats.push({id, price, number, row});
+    }
+    applyRowLock();
+    updateSummary();
+}
+
+function resetSelection() {
+    document.querySelectorAll('#seatGrid .seat.selected').forEach(s => {
+        s.classList.remove('selected'); s.classList.add('available');
+    });
+    selectedSeats = []; activeRow = null;
+    applyRowLock(); updateSummary();
+}
+
+function updateSummary() {
+    const list = document.getElementById('selectedSeatsList');
+    const subtotalEl = document.getElementById('subtotal');
+    const gstEl = document.getElementById('gst');
+    const totalEl = document.getElementById('total');
+    const btn = document.getElementById('proceedBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const activeBadge = document.getElementById('activeRowBadge');
+    const activeText = document.getElementById('activeRowText');
+
+    if (selectedSeats.length === 0) {
+        list.innerHTML = '<p class="text-muted text-center py-3">No seats selected</p>';
+        subtotalEl.textContent = 'Rs.0'; gstEl.textContent = 'Rs.0'; totalEl.textContent = 'Rs.0';
+        btn.disabled = true; resetBtn.style.display = 'none'; activeBadge.style.display = 'none';
+        return;
+    }
+    let html = ''; let subtotal = 0;
+    selectedSeats.forEach(s => {
+        subtotal += s.price;
+        html += '<div class="d-flex justify-content-between align-items-center py-1"><span><i class="fas fa-chair text-primary me-1"></i>Seat ' + s.number + ' <small class="text-muted">(' + s.row + ')</small></span><span class="fw-bold">Rs.' + s.price + '</span></div>';
+    });
+    list.innerHTML = html;
+    const gst = subtotal * 0.05, total = subtotal + gst;
+    subtotalEl.textContent = 'Rs.' + subtotal.toFixed(0);
+    gstEl.textContent = 'Rs.' + gst.toFixed(0);
+    totalEl.textContent = 'Rs.' + total.toFixed(0);
+    btn.disabled = false; resetBtn.style.display = 'block';
+    activeBadge.style.display = 'block';
+    activeText.textContent = activeRow + ' — ' + selectedSeats.length + ' seat(s)';
+}
+
+function proceedToCheckout() {
+    const ids = selectedSeats.map(s => s.id).join(',');
+    window.location.href = '{% url "checkout" schedule.id %}?seats=' + ids;
+}
+
+// CSS for row-dim (injected so we don't need a separate stylesheet)
+const style = document.createElement('style');
+style.textContent = '.row-dim { opacity: 0.18; pointer-events: none; }';
+document.head.appendChild(style);
+</script>
+{% endblock %}

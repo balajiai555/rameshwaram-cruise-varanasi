@@ -1,0 +1,267 @@
+========================================================================
+             RAMESHWARAM CRUISE PLATFORM - PRODUCTION DEPLOYMENT GUIDE
+========================================================================
+
+This guide provides step-by-step instructions to host and deploy the 
+Django reservation application live on a Linux Ubuntu VPS (Virtual 
+Private Server) using PostgreSQL, Gunicorn, Nginx, Let's Encrypt SSL, 
+and Cron jobs.
+
+------------------------------------------------------------------------
+STEP 1: LOGIN AND INITIAL PACKAGES UPDATE
+------------------------------------------------------------------------
+Log in to your Ubuntu VPS via SSH:
+```bash
+ssh root@your_server_ip
+```
+Update the package repository lists and upgrade existing system packages:
+```bash
+sudo apt update && sudo apt upgrade -y
+```
+
+------------------------------------------------------------------------
+STEP 2: INSTALL SYSTEM DEPENDENCIES
+------------------------------------------------------------------------
+Install Python3, Pip, Nginx, PostgreSQL, virtualenv, and the graphic library 
+dependencies required by Weasyprint/Pillow to compile PDF tickets:
+```bash
+sudo apt install python3-pip python3-venv python3-dev libpq-dev postgresql postgresql-contrib nginx curl -y
+# Dependencies for Weasyprint PDF Engine:
+sudo apt install python3-cffi python3-brotli libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 -y
+```
+
+------------------------------------------------------------------------
+STEP 3: CONFIGURE POSTGRESQL DATABASE
+------------------------------------------------------------------------
+Switch to the default postgres database administrator user:
+```bash
+sudo -i -u postgres psql
+```
+Execute the following database queries to create the database and user:
+```sql
+CREATE DATABASE cruise_db;
+CREATE USER cruise_user WITH PASSWORD 'secure_db_password_123';
+ALTER ROLE cruise_user SET client_encoding TO 'utf8';
+ALTER ROLE cruise_user SET default_transaction_isolation TO 'read committed';
+ALTER ROLE cruise_user SET timezone TO 'UTC';
+GRANT ALL PRIVILEGES ON DATABASE cruise_db TO cruise_user;
+\q
+```
+
+------------------------------------------------------------------------
+STEP 4: SETUP APPLICATION ROOT & VIRTUAL ENVIRONMENT
+------------------------------------------------------------------------
+Create a dedicated deployment directory, set access ownership, and clone/copy 
+your project files there:
+```bash
+sudo mkdir -p /var/www/cruise
+sudo chown -R $USER:$USER /var/www/cruise
+cd /var/www/cruise
+```
+Set up the Python virtual environment and install the required modules:
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install --upgrade pip
+pip install -r req.txt
+pip install gunicorn psycopg2-binary
+```
+
+------------------------------------------------------------------------
+STEP 5: CONFIGURE PRODUCTION ENVIRONMENT VARIABLES (.ENV)
+------------------------------------------------------------------------
+Create a production `.env` environment variables configuration file:
+```bash
+nano /var/www/cruise/.env
+```
+Populate the file with the following variables (adjust passwords, domain, and 
+Razorpay credentials to match your live details):
+```env
+DEBUG=False
+SECRET_KEY=enter_your_secure_django_secret_key_here_xxxxxxx
+ALLOWED_HOSTS=book.rameshwaramcruise.com,your_vps_ip
+
+# Production PostgreSQL Database
+DATABASE_URL=postgres://cruise_user:secure_db_password_123@localhost/cruise_db
+
+# Production SMTP Email Server Details
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=balajiai555@gmail.com
+EMAIL_HOST_PASSWORD=xhgv bzzm zoll dqak
+
+# Production Razorpay Keys (from merchant dashboard)
+RAZORPAY_KEY_ID=rzp_live_xxxxxxxxxxxxxx
+RAZORPAY_KEY_SECRET=yyyyyyyyyyyyyyyyyyyyyyyy
+RAZORPAY_WEBHOOK_SECRET=zzzzzzzzzzzzzzzzzzzzzzzzzz
+
+# Production Base Domain URL (no trailing slash)
+BASE_URL=https://book.rameshwaramcruise.com
+```
+
+------------------------------------------------------------------------
+STEP 6: DATABASE MIGRATION & ASSETS PREPARATION
+------------------------------------------------------------------------
+Run migrations, compile static assets, and generate initial schedule seat maps:
+```bash
+python manage.py migrate
+python manage.py collectstatic --noinput
+```
+Create a superuser account for dashboard access:
+```bash
+python manage.py createsuperuser
+```
+
+------------------------------------------------------------------------
+STEP 7: CONFIGURE GUNICORN WSGI SERVICE
+------------------------------------------------------------------------
+Create a Gunicorn systemd socket configuration:
+```bash
+sudo nano /etc/systemd/system/gunicorn.socket
+```
+Paste the following layout:
+```ini
+[Unit]
+Description=gunicorn socket
+
+[Socket]
+ListenStream=/run/gunicorn.sock
+
+[Install]
+WantedBy=sockets.target
+```
+
+Create a Gunicorn systemd service daemon:
+```bash
+sudo nano /etc/systemd/system/gunicorn.service
+```
+Paste this configuration (ensure User and WorkDirectory match your login username):
+```ini
+[Unit]
+Description=gunicorn daemon
+Requires=gunicorn.socket
+After=network.target
+
+[Service]
+User=ubuntu
+Group=www-data
+WorkingDirectory=/var/www/cruise
+ExecStart=/var/www/cruise/venv/bin/gunicorn \
+          --access-logfile - \
+          --workers 3 \
+          --bind unix:/run/gunicorn.sock \
+          cruise_booking.wsgi:application
+
+[Install]
+WantedBy=multi-user.target
+```
+Start and enable the daemon sockets:
+```bash
+sudo systemctl start gunicorn.socket
+sudo systemctl enable gunicorn.socket
+```
+
+------------------------------------------------------------------------
+STEP 8: CONFIGURE NGINX WEB SERVER (REVERSE PROXY)
+------------------------------------------------------------------------
+Create an Nginx configuration block file for your domain:
+```bash
+sudo nano /etc/nginx/sites-available/cruise
+```
+Paste the following Nginx server config block:
+```nginx
+server {
+    listen 80;
+    server_name book.rameshwaramcruise.com;
+
+    location = /favicon.ico { access_log off; log_not_found off; }
+    
+    # Django static assets folder
+    location /static/ {
+        root /var/www/cruise;
+    }
+
+    # Django uploaded media attachments
+    location /media/ {
+        root /var/www/cruise;
+    }
+
+    # Proxy connections to Gunicorn socket
+    location / {
+        include proxy_params;
+        proxy_pass http://unix:/run/gunicorn.sock;
+    }
+}
+```
+Enable the site block configuration and restart Nginx:
+```bash
+sudo ln -s /etc/nginx/sites-available/cruise /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+------------------------------------------------------------------------
+STEP 9: ENFORCE HTTPS SSL CERTIFICATES
+------------------------------------------------------------------------
+Install Let's Encrypt Certbot and apply secure SSL certificates dynamically to 
+your domain:
+```bash
+sudo apt install certbot python3-certbot-nginx -y
+sudo certbot --nginx -d book.rameshwaramcruise.com
+```
+Follow the certbot prompts. It will automatically re-write Nginx configs to force 
+HTTPS redirection.
+
+------------------------------------------------------------------------
+STEP 10: SET UP BACKGROUND CRON SWEEPS
+------------------------------------------------------------------------
+Configure a system cron tab script to automatically run the `expire_pending` 
+management sweep command every minute to free unpaid/expired held seats:
+```bash
+crontab -e
+```
+Add this entry to the bottom of the cron file:
+```text
+* * * * * /var/www/cruise/venv/bin/python /var/www/cruise/manage.py expire_pending >> /var/log/cruise_expire.log 2>&1
+```
+
+------------------------------------------------------------------------
+STEP 11: SET UP AUTOMATED WEEKLY DATABASE BACKUPS
+------------------------------------------------------------------------
+To ensure booking history is safe, schedule a weekly cron backup of your 
+PostgreSQL database.
+
+1. Create a script file to perform the dump:
+```bash
+mkdir -p /var/www/cruise/backups
+nano /var/www/cruise/backups/backup.sh
+```
+
+2. Paste the script contents (adjust database credentials as needed):
+```bash
+#!/bin/bash
+BACKUP_DIR="/var/www/cruise/backups"
+FILE_NAME="cruise_db_$(date +\%F_\%H\%M\%S).sql"
+pg_dump -U cruise_user -h localhost cruise_db > "$BACKUP_DIR/$FILE_NAME"
+# Retain backups for only 30 days to save disk space
+find "$BACKUP_DIR" -type f -name "*.sql" -mtime +30 -delete
+```
+
+3. Make the script executable:
+```bash
+chmod +x /var/www/cruise/backups/backup.sh
+```
+
+4. Add a cron job to execute the script every Sunday at 2:00 AM:
+```bash
+crontab -e
+```
+Add this entry to the bottom of the cron file:
+```text
+0 2 * * 0 /var/www/cruise/backups/backup.sh >> /var/log/cruise_backup.log 2>&1
+```
+
+Save and exit. Your server is now fully operating live, secure, and backed up!
+========================================================================

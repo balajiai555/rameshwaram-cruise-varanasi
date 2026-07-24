@@ -1,0 +1,20 @@
+ॐ नमो गंगायै नमः
+
+Hi {{ booking.guest_name }},
+Welcome to Rameshwaram Cruise Varanasi! We are delighted to have you on board for your holy Varanasi Ghat Cruise Yatra.
+
+(Save Paper, Save Environment: There is NO need to print a physical copy of this ticket. You can simply show the attached PDF ticket copy or this email on your mobile device at the boarding point.)
+BOOKING #: {{ booking.booking_number }}
+CRUISE: {{ ticket.booking.schedule.cruise.name }}
+ROUTE: {{ ticket.booking.schedule.cruise.from_port }} -> {{ ticket.booking.schedule.cruise.to_port }}
+DATE: {{ ticket.booking.schedule.date }}
+DEPARTURE: {{ ticket.booking.schedule.departure_time }}
+ROW: {{ ticket.booking.booking_seats.first.seat.row_label }}
+PRIMARY: {{ ticket.booking.primary_passenger.passenger_name }} ({{ ticket.booking.primary_passenger.get_id_type_display }})
+SEATS:
+{% for bs in ticket.booking.booking_seats.all %}- {{ bs.seat.seat_number }} ({{ bs.seat.row_label }}) - {{ bs.passenger_name }}{% if bs.is_primary %} (Primary){% endif %}
+{% endfor %}
+TOTAL: Rs.{{ ticket.booking.total_amount }}
+VIEW: {{ base_url }}{% url 'ticket_detail' ticket.id %}?bn={{ ticket.booking.booking_number }}
+Re-download anytime: sign in with this email at {{ base_url }}{% url 'customer_login' %}
+- CruiseBook

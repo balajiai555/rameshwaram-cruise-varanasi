@@ -1,0 +1,458 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Rameshwaram Cruise Varanasi | Luxury Ganga Cruise Ticket Booking{% endblock %}</title>
+    <meta name="description"
+        content="{% block description %}Book sunset & evening Ganga cruise in Varanasi with front-row seats to the historic Dashashwamedh Ghat Aarti. Enjoy live devotional music, spiritual commentary, and Varanasi heritage storytelling onboard the luxury Rameshwaram Cruise.{% endblock %}">
+    <meta name="keywords"
+        content="{% block keywords %}Rameshwaram Cruise Varanasi, Ganga cruise Varanasi, luxury cruise booking Varanasi, Ganga Aarti boat ride, Dashashwamedh Ghat Aarti cruise, Varanasi ghats cruise, sunset cruise Varanasi, Varanasi travel tickets, book.rameshwaramcruise.com{% endblock %}">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title"
+        content="{% block og_title %}Rameshwaram Cruise Varanasi | Luxury Ganga Cruise Ticket Booking{% endblock %}">
+    <meta property="og:description"
+        content="{% block og_description %}Witness the historic Dashashwamedh Ghat Aarti from the comfort of the Rameshwaram Cruise. Enjoy panoramic views of 84 Varanasi ghats on a luxury Ganga cruise.{% endblock %}">
+    <meta property="og:url" content="https://book.rameshwaramcruise.com/">
+    <meta property="og:image" content="{% static 'images/logo.png' %}">
+
+    <link rel="icon" type="image/png" href="{% static 'images/logo.png' %}">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,800;0,900;1,800;1,900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #BE0A13;
+            /* Rameshwaram Crimson Red */
+            --primary-hover: #9E0810;
+            --secondary: #001c3f;
+            /* Rameshwaram Deep Navy Blue */
+            --accent: #f59e0b;
+            /* Temple Gold/Amber */
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --surface: #fcfbf7;
+            /* Light warm ivory background */
+            --navbar-gradient: linear-gradient(135deg, #001026 0%, #001c3f 100%);
+            --card-border-radius: 16px;
+            --input-border-radius: 12px;
+        }
+
+        body {
+            background-color: var(--surface);
+            font-family: 'Plus Jakarta Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
+            color: #334155;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        @keyframes neonGlow {
+            0% {
+                border-bottom-color: rgba(147, 197, 253, 0.25);
+                box-shadow: 0 2px 12px rgba(147, 197, 253, 0.12);
+            }
+
+            50% {
+                border-bottom-color: rgba(245, 158, 11, 0.7);
+                box-shadow: 0 2px 24px rgba(245, 158, 11, 0.4);
+            }
+
+            100% {
+                border-bottom-color: rgba(147, 197, 253, 0.25);
+                box-shadow: 0 2px 12px rgba(147, 197, 253, 0.12);
+            }
+        }
+
+        /* Modernized Light Navbar */
+        .navbar {
+            background: linear-gradient(to right, #fffdf8 0%, #fffcf5 100%) !important;
+            padding: 0.85rem 0;
+            border-bottom: 2.5px solid rgba(245, 158, 11, 0.25);
+            animation: warmGlow 8s infinite ease-in-out;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            transition: padding 0.3s ease-in-out, background 0.3s ease-in-out;
+        }
+
+        @keyframes warmGlow {
+            0% {
+                border-bottom-color: rgba(245, 158, 11, 0.15);
+                box-shadow: 0 4px 12px rgba(245, 158, 11, 0.02);
+            }
+
+            50% {
+                border-bottom-color: rgba(245, 158, 11, 0.5);
+                box-shadow: 0 4px 20px rgba(245, 158, 11, 0.08);
+            }
+
+            100% {
+                border-bottom-color: rgba(245, 158, 11, 0.15);
+                box-shadow: 0 4px 12px rgba(245, 158, 11, 0.02);
+            }
+        }
+
+        .navbar-brand img {
+            transition: height 0.3s ease-in-out;
+        }
+
+        @media (max-width: 768px) {
+            .navbar-brand img {
+                height: 52px !important;
+            }
+
+            .navbar {
+                padding: 0.5rem 0 !important;
+            }
+        }
+
+        .navbar-brand {
+            font-weight: 800;
+            font-size: 1.35rem;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-link {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #001c3f !important;
+            padding: 0.5rem 1.1rem !important;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-link:hover,
+        .nav-item.active .nav-link {
+            color: var(--primary) !important;
+            background: rgba(190, 10, 19, 0.05);
+        }
+
+        .btn-nav-outline {
+            color: var(--primary) !important;
+            border-color: var(--primary) !important;
+            background: transparent;
+            transition: all 0.2s ease;
+        }
+
+        .btn-nav-outline:hover {
+            color: #ffffff !important;
+            background: var(--primary) !important;
+        }
+
+        .btn-nav-filled {
+            color: #ffffff !important;
+            background: var(--primary) !important;
+            border-color: var(--primary) !important;
+            transition: all 0.2s ease;
+        }
+
+        .btn-nav-filled:hover {
+            background: var(--primary-hover) !important;
+            border-color: var(--primary-hover) !important;
+        }
+
+        /* Generic Global Layout Elements */
+        .card {
+            border: none;
+            border-radius: var(--card-border-radius);
+            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.03);
+            background: #ffffff;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        /* Premium Global Inputs & Forms */
+        .form-control {
+            border-radius: var(--input-border-radius);
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            background-color: #f8fafc;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus {
+            background-color: #ffffff;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        }
+
+        /* Modernized Interactive Form Buttons */
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            border-radius: var(--input-border-radius);
+            padding: 12px 24px;
+            font-weight: 700;
+            letter-spacing: -0.1px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-primary:hover,
+        .btn-primary:focus,
+        .btn-primary:active {
+            background-color: var(--primary-hover) !important;
+            border-color: var(--primary-hover) !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+        }
+
+        .btn-primary:disabled {
+            background-color: #cbd5e1;
+            border-color: #cbd5e1;
+            transform: none;
+        }
+
+        /* Border-left Dynamic Dashboard Cards */
+        .dashboard-card {
+            border-left: 5px solid var(--primary);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .dashboard-card.success {
+            border-left-color: var(--success);
+        }
+
+        .dashboard-card.warning {
+            border-left-color: var(--warning);
+        }
+
+        .dashboard-card.danger {
+            border-left-color: var(--danger);
+        }
+
+        /* Secure Ticket Layout Design */
+        .ticket-card {
+            background: #ffffff;
+            border: 2px dashed #cbd5e1;
+            border-radius: 16px;
+            position: relative;
+        }
+
+        .qr-container {
+            background: #ffffff;
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(15, 23, 42, 0.06);
+            display: inline-block;
+        }
+
+        /* Modernized Footer */
+        .footer-social-btn {
+            width: 38px;
+            height: 38px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #94a3b8 !important;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+        }
+
+        .footer-social-btn:hover {
+            background-color: var(--primary) !important;
+            border-color: var(--primary) !important;
+            color: #ffffff !important;
+            transform: translateY(-3px) scale(1.08);
+            box-shadow: 0 4px 12px rgba(190, 10, 19, 0.4);
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+
+    <nav class="navbar navbar-light navbar-expand-lg sticky-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="{% url 'home' %}" style="padding: 0;">
+                <img src="{% static 'images/logo.png' %}" alt="Rameshwaram Cruise Varanasi"
+                    style="height: 80px; width: auto;">
+            </a>
+            <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navCollapse">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navCollapse">
+                <ul class="navbar-nav ms-auto align-items-center gap-1 mt-2 mt-lg-0">
+                    {% if user.is_authenticated and user.is_staff %}
+                    <li class="nav-item"><a class="nav-link" href="{% url 'dashboard' %}"><i
+                                class="fas fa-chart-line me-2 small"></i>Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_schedules' %}"><i
+                                class="fas fa-calendar-alt me-2 small"></i>Schedules & Prices</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_bookings' %}"><i
+                                class="fas fa-list-ul me-2 small"></i>Bookings</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'qr_scanner' %}"><i
+                                class="fas fa-qrcode me-2 small"></i>Scanner</a></li>
+                    <li class="nav-item ms-lg-2">
+                        <a class="btn btn-nav-outline btn-sm px-3 fw-bold rounded-pill" style="font-size: 1.05rem;"
+                            href="{% url 'logout' %}">
+                            <i class="fas fa-sign-out-alt me-1"></i> Logout
+                        </a>
+                    </li>
+                    {% elif request.session.customer_email %}
+                    <li class="nav-item"><a class="nav-link" href="{% url 'booking_list' %}"><i
+                                class="fas fa-ticket me-2 small"></i>My Tickets</a></li>
+                    <li class="nav-item ms-lg-2">
+                        <a class="btn btn-nav-outline btn-sm px-3 fw-bold rounded-pill" style="font-size: 1.05rem;"
+                            href="{% url 'customer_logout' %}">
+                            <i class="fas fa-sign-out-alt me-1"></i> Sign out
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="nav-item me-1">
+                        <a class="btn btn-nav-outline btn-sm px-3 fw-bold rounded-pill" style="font-size: 1.05rem;"
+                            href="{% url 'login' %}">
+                            <i class="fas fa-user-shield me-1 small"></i> Staff Login
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-nav-filled btn-sm px-3 fw-bold rounded-pill"
+                            style="font-size: 1.05rem; box-shadow: 0 2px 8px rgba(255,255,255,0.1);"
+                            href="{% url 'customer_login' %}">
+                            <i class="fas fa-envelope me-1 small"></i> Sign in with email
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="py-5 min-vh-100">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="text-light py-5 mt-auto"
+        style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-top: 3px solid #2563eb;">
+        <div class="container">
+            <div class="row g-4 justify-content-between text-start">
+                <!-- Column 1: Brand Info -->
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <img src="{% static 'images/logo.jpg' %}" alt="Rameshwaram Cruises"
+                            style="height: 50px; width: auto; filter: drop-shadow(0 0 8px rgba(255,255,255,0.1));">
+                    </div>
+                    <p class="small mb-4" style="line-height: 1.6; color: #94a3b8;">
+                        Embark on a divine journey across the sacred Ganges in Varanasi. Experience high-end comfort,
+                        safety, and cultural splendor with our premium cruise liners.
+                    </p>
+                    <div class="d-flex gap-3">
+                        <a href="https://www.facebook.com/rameshwaramcruise" target="_blank" class="footer-social-btn"
+                            aria-label="Facebook">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="https://www.instagram.com/rameshwaramcruisevaranasi/" target="_blank"
+                            class="footer-social-btn" aria-label="Instagram">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="https://www.linkedin.com/company/rameshwaram-cruise-varanasi/" target="_blank"
+                            class="footer-social-btn" aria-label="LinkedIn">
+                            <i class="fab fa-linkedin-in"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Column 2: Legal & Navigation Links -->
+                <div class="col-md-3">
+                    <h5 class="fw-bold mb-3 text-white">Quick & Legal Links</h5>
+                    <ul class="list-unstyled small mb-0 d-flex flex-column gap-2">
+                        <li>
+                            <a href="{% url 'home' %}" class="text-decoration-none hover-link" style="color: #94a3b8;">
+                                <i class="fas fa-chevron-right me-2" style="font-size: 0.75rem;"></i>Home
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'privacy_policy' %}" class="text-decoration-none hover-link"
+                                style="color: #94a3b8;">
+                                <i class="fas fa-chevron-right me-2" style="font-size: 0.75rem;"></i>Privacy & Policy
+                            </a>
+                        </li>
+                        <li>
+                            <a href="https://rameshwaramcruise.com/terms-conditions/" target="_blank"
+                                class="text-decoration-none hover-link" style="color: #94a3b8;">
+                                <i class="fas fa-chevron-right me-2" style="font-size: 0.75rem;"></i>Terms & Conditions
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Column 3: Contact details -->
+                <div class="col-md-4">
+                    <h5 class="fw-bold mb-3 text-white">Contact Information</h5>
+                    <ul class="list-unstyled small mb-0 d-flex flex-column gap-3" style="color: #94a3b8;">
+                        <li class="d-flex align-items-start gap-2">
+                            <i class="fas fa-map-marker-alt mt-1" style="color: #60a5fa;"></i>
+                            <span>Ramnagar Ghat, Varanasi, Uttar Pradesh, India</span>
+                        </li>
+                        <li class="d-flex align-items-center gap-2">
+                            <i class="fas fa-phone-alt" style="color: #60a5fa;"></i>
+                            <div>
+                                <a href="tel:8853537475" class="text-decoration-none hover-link"
+                                    style="color: #94a3b8;">88535 37475</a>,
+                                <a href="tel:9555857695" class="text-decoration-none hover-link"
+                                    style="color: #94a3b8;">95558 57695</a>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <hr class="my-4" style="border-color: rgba(255,255,255,0.1);">
+
+            <!-- Bottom Copyright Section -->
+            <div class="row">
+                <div class="col-12 text-center">
+                    <small class="fw-medium" style="font-size: 1.05rem; color: #94a3b8;">
+                        <strong>&copy; 2026 Rameshwaram Cruises Varanasi</strong> Ticketing Platform developed at <a
+                            href="https://balajiailab.com" target="_blank" class="text-decoration-none fw-bold"
+                            style="color: #60a5fa;">BalajiAILab</a> and managed by <a href="https://technoptimize.in/"
+                            target="_blank" class="text-decoration-none fw-bold"
+                            style="color: #60a5fa;">Technoptimize</a>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <style>
+        .hover-link {
+            transition: color 0.2s ease-in-out;
+        }
+
+        .hover-link:hover {
+            color: #ffffff !important;
+            text-decoration: underline !important;
+        }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Premium Dynamic Scroll Shrink Navbar Optimization
+        window.addEventListener('scroll', function () {
+            const logo = document.querySelector('.navbar-brand img');
+            const navbar = document.querySelector('.navbar');
+            if (window.innerWidth > 768) {
+                if (window.scrollY > 50) {
+                    if (logo) logo.style.height = '52px';
+                    if (navbar) navbar.style.padding = '0.4rem 0';
+                } else {
+                    if (logo) logo.style.height = '80px';
+                    if (navbar) navbar.style.padding = '0.85rem 0';
+                }
+            }
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

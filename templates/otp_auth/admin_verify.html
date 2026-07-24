@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Admin 2FA Verification{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow-lg border-0 rounded-4">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10 text-primary mb-3" style="width:70px;height:70px;">
+                            <i class="fas fa-shield-alt fa-2x"></i>
+                        </div>
+                        <h4 class="fw-extrabold text-dark">Staff 2FA Verification</h4>
+                        <p class="text-muted small">For security, we sent a 6-digit access code to the email registered under <strong>{{ email }}</strong></p>
+                    </div>
+                    {% if error %}
+                    <div class="alert alert-danger rounded-3" style="font-size: 14px;">{{ error }}</div>
+                    {% endif %}
+                    <form method="post" action="{% url 'admin_otp_verify' %}">
+                        {% csrf_token %}
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-secondary text-uppercase" style="letter-spacing: 0.5px;">Enter Verification Code</label>
+                            <input type="text" name="code" class="form-control text-center" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="******" required autofocus style="letter-spacing:0.5em;font-size:1.6rem;font-weight:800; border-radius: 12px; border: 2px solid #cbd5e1;">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 btn-lg py-2.5 fw-bold rounded-3">Verify & Login</button>
+                    </form>
+                    <div class="text-center mt-4">
+                        <small class="text-muted">
+                            Didn't receive the email? 
+                            <a href="{% url 'admin_otp_resend' %}" class="fw-bold text-decoration-none text-primary">Resend Code</a>
+                        </small>
+                    </div>
+                    <div class="text-center mt-3">
+                        <a href="/admin/logout/" class="small text-muted text-decoration-none"><i class="fas fa-sign-out-alt me-1"></i>Cancel & Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

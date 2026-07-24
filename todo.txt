@@ -1,0 +1,457 @@
+========================================================================
+                      CRUISE BOOKING PLATFORM ROADMAP
+========================================================================
+
+This file contains the step-by-step guides, code implementations, and
+instructions for:
+  1. Staff 2-Factor Email OTP Authentication (Complete View/Template code)
+  2. Transitioning Razorpay from Test Mode to Live Production
+  3. Deploying the Django application to a live VPS (Virtual Private Server)
+
+========================================================================
+PART 1: STAFF 2-FACTOR EMAIL OTP AUTHENTICATION CODE
+========================================================================
+
+To secure staff logins at /accounts/login/, we intercept successful credential
+logins, send a 6-digit OTP code to the staff user's email, and redirect them to
+a secondary verification screen.
+
+Step 1.1: Update `accounts/views.py`
+-----------------------------------
+Replace your standard login view or configure it to handle the two-stage flow:
+
+```python
+# accounts/views.py (Add or modify views to look like this)
+
+import random
+from django.shortcuts import render, redirect
+from django.contrib.auth import login as django_login
+from django.contrib.auth.views import LoginView
+from django.views import View
+from django.core.mail import send_mail
+from django.contrib import messages
+from django.utils import timezone
+from datetime import timedelta
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+class StaffLoginView(LoginView):
+    template_name = 'registration/login.html'
+
+    def form_valid(self, form):
+        user = form.get_user()
+        
+        # Intercept staff users for 2FA OTP verification
+        if user.is_staff:
+            # 1. Generate 6-Digit secure random OTP
+            otp_code = str(random.randint(100000, 999999))
+            expiry = timezone.now() + timedelta(minutes=5)
+            
+            # 2. Store user ID, OTP, and expiry temporarily in session
+            self.request.session['pre_2fa_user_id'] = user.id
+            self.request.session['otp_code'] = otp_code
+            self.request.session['otp_expires'] = expiry.isoformat()
+            
+            # 3. Email OTP to the staff user
+            try:
+                send_mail(
+                    subject="Staff Portal Login verification Code - 2FA",
+                    message=f"Hello,\n\nYour 2FA verification code is: {otp_code}\nThis code is valid for 5 minutes.\n\nRegards,\nSecurity Team",
+                    from_email=None, # Uses DEFAULT_FROM_EMAIL
+                    recipient_list=[user.email],
+                    fail_silently=False,
+                )
+                messages.info(self.request, "A 6-digit verification code was sent to your registered email.")
+                return redirect('verify_otp')
+            except Exception as e:
+                messages.error(self.request, f"Failed to send 2FA email: {str(e)}")
+                return render(self.request, self.template_name, {'form': form})
+        
+        # Standard customer/non-staff login directly
+        django_login(self.request, user)
+        return redirect(self.get_success_url())
+
+
+class VerifyOTPView(View):
+    template_name = 'registration/verify_otp.html'
+
+    def get(self, request):
+        if 'pre_2fa_user_id' not in request.session:
+            messages.error(request, "Please enter your username and password first.")
+            return redirect('login')
+        return render(request, self.template_name)
+
+    def post(self, request):
+        user_id = request.session.get('pre_2fa_user_id')
+        session_otp = request.session.get('otp_code')
+        expiry_str = request.session.get('otp_expires')
+        
+        entered_otp = request.POST.get('otp', '').strip()
+        
+        if not (user_id and session_otp and expiry_str):
+            messages.error(request, "Session expired. Please log in again.")
+            return redirect('login')
+            
+        expiry = timezone.datetime.fromisoformat(expiry_str)
+        if timezone.now() > expiry:
+            messages.error(request, "OTP has expired. Please log in again.")
+            self._cleanup_session(request)
+            return redirect('login')
+            
+        if entered_otp != session_otp:
+            messages.error(request, "Invalid verification code. Please try again.")
+            return render(request, self.template_name)
+            
+        # Success: Log the user in
+        try:
+            user = User.objects.get(pk=user_id)
+            django_login(request, user)
+            # Cleanup 2FA session variables
+            self._cleanup_session(request)
+            return redirect('dashboard') # Redirect straight to staff dashboard
+        except User.DoesNotExist:
+            messages.error(request, "User not found.")
+            return redirect('login')
+            
+    def _cleanup_session(self, request):
+        request.session.pop('pre_2fa_user_id', None)
+        request.session.pop('otp_code', None)
+        request.session.pop('otp_expires', None)
+        request.session.modified = True
+```
+
+Step 1.2: Register URLs in `accounts/urls.py`
+-------------------------------------------
+Update your url patterns map:
+
+```python
+# accounts/urls.py
+
+from django.urls import path
+from django.contrib.auth.views import LogoutView
+from .views import StaffLoginView, VerifyOTPView
+
+urlpatterns = [
+    # Override default login pattern
+    path('login/', StaffLoginView.as_view(), name='login'),
+    path('verify-otp/', VerifyOTPView.as_view(), name='verify_otp'),
+    path('logout/', LogoutView.as_view(), name='logout'),
+]
+```
+
+Step 1.3: Create Template `templates/registration/verify_otp.html`
+-----------------------------------------------------------------
+Write the responsive styling code:
+
+```html
+<!-- templates/registration/verify_otp.html -->
+{% extends 'base.html' %}
+{% block title %}Verify 2FA Code{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-body p-4 p-md-5 text-center">
+                    <div class="text-primary mb-3">
+                        <i class="fas fa-shield-alt fa-3x"></i>
+                    </div>
+                    <h3 class="fw-bold mb-1">Two-Factor Authentication</h3>
+                    <p class="text-muted small mb-4">Enter the 6-digit OTP code sent to your registered email to log in.</p>
+
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} small py-2 mb-3">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <form method="post" autocomplete="off">
+                        {% csrf_token %}
+                        <div class="mb-4">
+                            <input type="text" name="otp" class="form-control text-center fs-3 fw-bold tracking-widest rounded-3 py-2" 
+                                   placeholder="000000" maxlength="6" pattern="\d{6}" required autofocus>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 py-2.5 fw-bold rounded-3">
+                            Confirm Verification
+                        </button>
+                    </form>
+                    
+                    <div class="mt-4">
+                        <a href="{% url 'login' %}" class="small text-decoration-none text-muted">
+                            <i class="fas fa-arrow-left me-1"></i> Back to Login
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.tracking-widest {
+    letter-spacing: 0.35em;
+    padding-left: 0.35em; /* offsets tracking gap */
+}
+</style>
+{% endblock %}
+```
+
+
+========================================================================
+PART 2: REMOVING TEST PAYMENT BYPASS AND MAKING PAYMENTS LIVE
+========================================================================
+
+Currently, the application contains a test-payment bypass button for debug
+environments. To secure the payment pipeline and make it live in production:
+
+Step 2.1: Hide Test Payment Buttons in Frontend
+----------------------------------------------
+The bypass button is rendered inside `bookings/templates/booking/checkout.html`.
+Look at this conditional layout:
+```html
+{% if debug %}
+    <button type="button" class="btn btn-outline-warning w-100 mt-2" onclick="initiateDummyPayment()">
+        [Test Env] Dummy Success Payment
+    </button>
+{% endif %}
+```
+Make sure `DEBUG` is set to `False` in your production server's `.env` configuration. 
+This will automatically hide the buttons.
+
+Step 2.2: Disable Dummy Endpoint validation in views
+----------------------------------------------------
+In [VerifyPaymentView](file:///e:/curise/cruise_booking/bookings/views.py#L169-L185), ensure dummy requests are completely blocked in production by checking `settings.DEBUG`:
+```python
+        is_dummy = data.get('is_dummy', False)
+        # Blocks dummy verification if DEBUG is False
+        if is_dummy and not settings.DEBUG:
+            return JsonResponse({'error': 'Dummy payments are disabled in production.'}, status=400)
+```
+
+Step 2.3: Configure Production Razorpay Credentials in `.env`
+------------------------------------------------------------
+Update the `.env` settings file on your VPS to use the production merchant credentials:
+```env
+# Razorpay Credentials (from merchant dashboard)
+RAZORPAY_KEY_ID=rzp_live_xxxxxxxxxxxxxx
+RAZORPAY_KEY_SECRET=yyyyyyyyyyyyyyyyyyyyyyyy
+RAZORPAY_WEBHOOK_SECRET=zzzzzzzzzzzzzzzzzzzzzzzzzz
+```
+Ensure settings.py reads these environment configurations in production:
+```python
+# settings.py
+RAZORPAY_KEY_ID = os.getenv('RAZORPAY_KEY_ID', 'fallback_test_key')
+RAZORPAY_KEY_SECRET = os.getenv('RAZORPAY_KEY_SECRET', 'fallback_test_secret')
+RAZORPAY_WEBHOOK_SECRET = os.getenv('RAZORPAY_WEBHOOK_SECRET', '')
+```
+
+
+========================================================================
+PART 3: STEP-BY-STEP DEPLOYMENT ON VPS (UBUNTU)
+========================================================================
+
+Follow these exact terminal commands to host your Django platform live:
+
+Step 3.1: Log in and Update VPS Server packages
+-----------------------------------------------
+```bash
+ssh root@your_vps_ip
+sudo apt update && sudo apt upgrade -y
+```
+
+Step 3.2: Install Required System Dependencies
+---------------------------------------------
+Install Python, Nginx, PostgreSQL, Pip, virtualenv, and build libraries needed by Weasyprint/Pillow:
+```bash
+sudo apt install python3-pip python3-venv python3-dev libpq-dev postgresql postgresql-contrib nginx curl -y
+# Libraries required for PDF compiler (Weasyprint / Pango)
+sudo apt install python3-pip python3-cffi python3-brotli libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 -y
+```
+
+Step 3.3: Configure PostgreSQL database
+--------------------------------------
+Log in to Postgres and set up a secure production database:
+```bash
+sudo -i -u postgres psql
+```
+Run the following SQL commands:
+```sql
+CREATE DATABASE cruise_db;
+CREATE USER cruise_user WITH PASSWORD 'secure_db_password_123';
+ALTER ROLE cruise_user SET client_encoding TO 'utf8';
+ALTER ROLE cruise_user SET default_transaction_isolation TO 'read committed';
+ALTER ROLE cruise_user SET timezone TO 'UTC';
+GRANT ALL PRIVILEGES ON DATABASE cruise_db TO cruise_user;
+\q
+```
+
+Step 3.4: Clone Project and Setup Virtual Environment
+-----------------------------------------------------
+Clone the files to your deployment directory (e.g. `/var/www/cruise/`):
+```bash
+sudo mkdir -p /var/www/cruise
+sudo chown -R $USER:$USER /var/www/cruise
+cd /var/www/cruise
+# (Upload/Clone your project files here)
+
+# Setup virtual environment
+python3 -m venv venv
+source venv/bin/activate
+pip install --upgrade pip
+pip install -r req.txt
+pip install gunicorn psycopg2-binary
+```
+
+Step 3.5: Configure Production Settings & Environment variables
+--------------------------------------------------------------
+Create a production `.env` file inside `/var/www/cruise/`:
+```bash
+nano .env
+```
+Populate with production values:
+```env
+DEBUG=False
+SECRET_KEY=super_secure_django_secret_key_xxxxxxx
+ALLOWED_HOSTS=rameshwaramcruise.com,your_vps_ip
+
+# Postgres Database credentials
+DATABASE_URL=postgres://cruise_user:secure_db_password_123@localhost/cruise_db
+
+# Email SMTP settings (Mailtrap/Gmail)
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.mailgun.org # or your SMTP server
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=noreply@rameshwaramcruise.com
+EMAIL_HOST_PASSWORD=smtp_server_password
+
+# Razorpay Keys
+RAZORPAY_KEY_ID=rzp_live_xxxxxxxxxxxxxx
+RAZORPAY_KEY_SECRET=yyyyyyyyyyyyyyyyyyyyyyyy
+RAZORPAY_WEBHOOK_SECRET=zzzzzzzzzzzzzzzzzzzzzzzzzz
+
+# Base URL for email links
+BASE_URL=https://rameshwaramcruise.com
+```
+
+Step 3.6: Migrate DB and Collect Statics
+----------------------------------------
+```bash
+python manage.py migrate
+python manage.py collectstatic --noinput
+python manage.py create_seats # Initialise seats mapping
+```
+Create a superuser for staff portal access:
+```bash
+python manage.py createsuperuser
+```
+
+Step 3.7: Configure Gunicorn Service (systemd)
+-----------------------------------------------
+Create Gunicorn socket file:
+```bash
+sudo nano /etc/systemd/system/gunicorn.socket
+```
+Paste this configuration:
+```ini
+[Unit]
+Description=gunicorn socket
+
+[Socket]
+ListenStream=/run/gunicorn.sock
+
+[Install]
+WantedBy=sockets.target
+```
+
+Create Gunicorn service file:
+```bash
+sudo nano /etc/systemd/system/gunicorn.service
+```
+Paste this configuration (adjust User, Cwd paths accordingly):
+```ini
+[Unit]
+Description=gunicorn daemon
+Requires=gunicorn.socket
+After=network.target
+
+[Service]
+User=ubuntu
+Group=www-data
+WorkingDirectory=/var/www/cruise
+ExecStart=/var/www/cruise/venv/bin/gunicorn \
+          --access-logfile - \
+          --workers 3 \
+          --bind unix:/run/gunicorn.sock \
+          cruise_booking.wsgi:application
+
+[Install]
+WantedBy=multi-user.target
+```
+Start and enable Gunicorn daemon socket:
+```bash
+sudo systemctl start gunicorn.socket
+sudo systemctl enable gunicorn.socket
+```
+
+Step 3.8: Configure Nginx as Reverse Proxy
+------------------------------------------
+Create site configuration inside Nginx:
+```bash
+sudo nano /etc/nginx/sites-available/cruise
+```
+Paste the reverse proxy server block layout:
+```nginx
+server {
+    listen 80;
+    server_name rameshwaramcruise.com www.rameshwaramcruise.com;
+
+    location = /favicon.ico { access_log off; log_not_found off; }
+    
+    # Path to static assets collected
+    location /static/ {
+        root /var/www/cruise;
+    }
+
+    # Path to uploaded media files
+    location /media/ {
+        root /var/www/cruise;
+    }
+
+    location / {
+        include proxy_params;
+        proxy_pass http://unix:/run/gunicorn.sock;
+    }
+}
+```
+Link configuration block and reload Nginx:
+```bash
+sudo ln -s /etc/nginx/sites-available/cruise /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+Step 3.9: Configure HTTPS SSL (Let's Encrypt Certbot)
+-----------------------------------------------------
+Obtain and enforce secure HTTPS session configurations automatically:
+```bash
+sudo apt install certbot python3-certbot-nginx -y
+sudo certbot --nginx -d rameshwaramcruise.com -d www.rameshwaramcruise.com
+```
+*Note*: Certbot automatically writes redirection tags inside Nginx configurations and takes care of SSL renewals.
+
+Step 3.10: Setup Background Cron Job for Expiring Held Seats
+------------------------------------------------------------
+To automatically expire unpaid reservations (using our 7-minute timer hold logic), configure a system cron to execute the manage command `expire_pending` every minute:
+```bash
+crontab -e
+```
+Add the following task execution row:
+```text
+* * * * * /var/www/cruise/venv/bin/python /var/www/cruise/manage.py expire_pending >> /var/log/cruise_expire.log 2>&1
+```
+Save and exit! The platform is now fully deployed and operating live with SSL!
+========================================================================

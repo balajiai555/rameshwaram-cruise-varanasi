@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}QR Scanner{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center"><div class="col-md-6 text-center">
+        <h3 class="fw-bold mb-4"><i class="fas fa-qrcode text-primary me-2"></i>Ticket Scanner</h3>
+        <div class="card"><div class="card-body">
+            <div id="reader" style="width:100%;"></div>
+            <div id="result" class="mt-3"></div>
+        </div></div>
+        <div class="card mt-3"><div class="card-body">
+            <label class="form-label fw-bold">Or enter booking # manually</label>
+            <div class="input-group">
+                <input type="text" id="manualInput" class="form-control" placeholder="CB-...">
+                <button class="btn btn-primary" onclick="verifyManual()">Verify</button>
+            </div>
+        </div></div>
+    </div></div>
+</div>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+const resultDiv = document.getElementById('result');
+function onScanSuccess(decodedText) { html5QrcodeScanner.clear(); verifyTicket(decodedText); }
+function verifyTicket(ticketNumber) {
+    resultDiv.innerHTML = '<div class="spinner-border text-primary"></div><p class="mt-2">Verifying...</p>';
+    fetch('/tickets/api/verify/', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+        body: JSON.stringify({ticket_number: ticketNumber})
+    })
+    .then(r => {
+        if (r.ok) { resultDiv.innerHTML = '<div class="alert alert-success"><i class="fas fa-check-circle me-2"></i><strong>Verified!</strong> Passenger can board.</div>'; }
+        else if (r.status === 400) { resultDiv.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-circle me-2"></i><strong>Already Used</strong></div>'; }
+        else { resultDiv.innerHTML = '<div class="alert alert-danger"><i class="fas fa-times-circle me-2"></i><strong>Invalid</strong></div>'; }
+        setTimeout(() => { resultDiv.innerHTML = ''; html5QrcodeScanner.render(onScanSuccess); }, 3000);
+    });
+}
+function verifyManual() {
+    const val = document.getElementById('manualInput').value.trim();
+    if (val) verifyTicket(val);
+}
+const html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} });
+html5QrcodeScanner.render(onScanSuccess);
+</script>
+{% endblock %}
+
