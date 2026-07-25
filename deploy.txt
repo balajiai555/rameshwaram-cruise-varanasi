@@ -90,7 +90,7 @@ EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
 EMAIL_USE_TLS=True
 EMAIL_HOST_USER=balajiai555@gmail.com
-EMAIL_HOST_PASSWORD=xhgv bzzm zoll dqak
+password = xyz
 
 # Production Razorpay Keys (from merchant dashboard)
 RAZORPAY_KEY_ID=rzp_live_xxxxxxxxxxxxxx
